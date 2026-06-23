@@ -34,7 +34,9 @@ npm run one "https://www.douyin.com/video/7650129245314316009"
 ```bash
 npm run serve          # → http://localhost:8787
 ```
-浏览器打开 `http://localhost:8787`,贴链接、回车。转过的秒回,新视频排队转(页面显示「第几位」)。
+浏览器打开 `http://localhost:8787`,是「即见」本地界面(提取字幕 / `/config` 自动同步 / `/tokens` Token 管理 / `/setup` 安装向导)。贴链接、回车,转过的秒回,新视频排队转(页面显示「第几位」)。
+
+> 前端 React + 字体都 vendor 在本地(`design/vendor/`),**无 CDN 依赖、可完全离线**。
 
 - 同网段别人也能用你这台:`http://<你的IP>:8787`。
 - 想加门禁:`TOKEN=随便一串 npm run serve`,别人用 `http://...:8787/?token=随便一串`。
