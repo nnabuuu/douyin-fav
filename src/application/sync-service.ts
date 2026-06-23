@@ -73,7 +73,7 @@ export class SyncService {
           run.items.push(rec);
           run.current = it.videoId;
           try {
-            if (await this.exporter.has(it.videoId)) { this.syncStore.markExported(it.videoId); rec.status = "skipped"; run.skipped++; continue; }
+            if (await this.exporter.has(it.videoId)) { this.syncStore.markExported(it.videoId); rec.status = "skipped"; rec.reason = "已在 Notion,跳过(别的 instance 同步过)"; run.skipped++; continue; }
             const result = await this.transcribe.run(videoUrl(platform, it.videoId), (m) => { rec.step = m; });
             if (!rec.title || rec.title === it.videoId) rec.title = result.title || rec.title;
             const { cleaned, summary } = await this.analyzer.analyze(result);
