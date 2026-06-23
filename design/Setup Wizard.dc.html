@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Serif:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --surface:#fafbfc; --surface-elevated:#ffffff; --surface-subtle:#f0f2f4;
+    --ink:#1a2332; --ink-secondary:#536471; --ink-muted:#8899a6;
+    --border:#e1e4e8; --border-subtle:#eef0f2;
+    --accent:#4a7c6f; --accent-light:#e8f0ed; --accent-dark:#3a6359;
+    --navy:#1a2332; --green:#4a7a52; --green-bg:#eaf2ea;
+    --amber:#8a7040; --amber-bg:#f3efe6; --red:#9a5a55; --red-bg:#f5ece9;
+    --font-sans:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    --font-serif:'Noto Serif',Georgia,serif;
+    --font-mono:'JetBrains Mono','Consolas',monospace;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:var(--font-sans);background:var(--surface);color:var(--ink);-webkit-font-smoothing:antialiased;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  @keyframes barflow{0%{background-position:0 0;}100%{background-position:28px 0;}}
+</style>
+</helmet>
+<div style="min-height:100vh;display:flex;">
+
+  <aside style="flex:none;width:248px;background:var(--surface-elevated);border-right:1px solid var(--border-subtle);min-height:100vh;display:flex;flex-direction:column;padding:22px 16px;position:sticky;top:0;height:100vh;">
+    <div style="display:flex;align-items:center;gap:10px;padding:6px 8px 22px;">
+      <img src="assets/logo-small.svg" width="26" height="26" alt="" style="border-radius:6px;display:block;" />
+      <span style="font-family:var(--font-serif);font-size:15px;letter-spacing:.15em;color:var(--ink);">即见</span>
+    </div>
+    <a href="Transcribe.dc.html" style="display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:10px;text-decoration:none;color:var(--ink-secondary);font-size:13.5px;font-weight:500;margin-bottom:3px;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h10M4 18h7"/></svg>提取字幕
+    </a>
+    <a href="Config.dc.html" style="display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:10px;text-decoration:none;color:var(--ink-secondary);font-size:13.5px;font-weight:500;margin-bottom:3px;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-6.2-8.6"/><path d="M12 7v5l3 2"/></svg>自动同步
+    </a>
+    <a href="Tokens.dc.html" style="display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:10px;text-decoration:none;color:var(--ink-secondary);font-size:13.5px;font-weight:500;margin-bottom:3px;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 5v6c0 5 3.5 8 8 11 4.5-3 8-6 8-11V5l-8-3z"/></svg>Token 管理
+    </a>
+    <a href="Setup Wizard.dc.html" style="display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:10px;text-decoration:none;background:var(--accent-light);color:var(--accent-dark);font-size:13.5px;font-weight:600;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h18M3 12h18M3 17h18"/></svg>安装向导
+    </a>
+    <div style="margin-top:auto;display:flex;align-items:center;gap:7px;font-size:11px;color:var(--ink-muted);padding:8px 10px;">
+      <span style="width:6px;height:6px;border-radius:50%;background:var(--green);"></span>本地运行 · localhost:7777
+    </div>
+  </aside>
+
+  <div style="flex:1;min-width:0;background:var(--surface);padding:48px 24px 96px;">
+  <div style="max-width:660px;margin:0 auto;">
+
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px;">
+      <img src="assets/logo-small.svg" width="28" height="28" alt="" style="border-radius:6px;display:block;" />
+      <span style="font-family:var(--font-serif);font-size:15px;letter-spacing:.15em;color:var(--ink);">即见</span>
+      <span style="width:1px;height:14px;background:var(--border);"></span>
+      <span style="font-size:13px;color:var(--ink-muted);letter-spacing:.04em;">安装向导</span>
+      <span style="margin-left:auto;display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--ink-muted);background:var(--surface-subtle);padding:4px 10px;border-radius:100px;">
+        <span style="width:6px;height:6px;border-radius:50%;background:var(--green);"></span>本地运行
+      </span>
+    </div>
+
+    <h1 style="font-size:28px;font-weight:700;letter-spacing:-.02em;margin:0 0 22px;line-height:1.15;">把抖音收藏夹<span style="color:var(--accent);">变成 Notion 文字稿</span></h1>
+
+    <div style="background:var(--surface-elevated);border:1px solid var(--border-subtle);border-radius:14px;padding:18px 22px;box-shadow:0 2px 12px rgba(0,0,0,.04);margin-bottom:24px;">
+      <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:11px;">
+        <div style="display:flex;align-items:baseline;gap:8px;">
+          <span style="font-size:20px;font-weight:700;">4</span>
+          <span style="font-size:13px;color:var(--ink-muted);">/ 6 项就绪</span>
+        </div>
+        <span style="font-size:12px;color:var(--accent);font-weight:600;">就快好了</span>
+      </div>
+      <div style="height:8px;border-radius:100px;background:var(--surface-subtle);overflow:hidden;">
+        <div style="width:66%;height:100%;border-radius:100px;background:linear-gradient(90deg,var(--accent),var(--accent-dark));"></div>
+      </div>
+    </div>
+
+    <!-- ① 环境依赖 -->
+    <div style="background:var(--surface-elevated);border:1px solid var(--border-subtle);border-radius:14px;box-shadow:0 2px 12px rgba(0,0,0,.04);margin-bottom:16px;">
+      <div style="display:flex;align-items:center;gap:13px;padding:18px 22px;">
+        <span style="flex:none;width:28px;height:28px;border-radius:50%;background:var(--accent-light);color:var(--accent-dark);font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;">①</span>
+        <h3 style="flex:1;margin:0;font-size:15px;font-weight:600;">环境依赖</h3>
+        <button onClick="{{ recheck }}" style="flex:none;font-family:var(--font-sans);font-size:12px;color:var(--ink-secondary);background:transparent;border:1px solid var(--border);border-radius:8px;padding:6px 12px;cursor:pointer;">重新检测</button>
+      </div>
+      <div style="border-top:1px solid var(--border-subtle);">
+
+        <div style="display:flex;align-items:center;gap:12px;padding:13px 22px;border-bottom:1px solid var(--border-subtle);">
+          <span style="flex:none;width:20px;height:20px;border-radius:50%;background:var(--green-bg);color:var(--green);display:flex;align-items:center;justify-content:center;font-size:11px;">✓</span>
+          <span style="flex:1;font-size:14px;font-weight:500;">Node.js</span>
+          <span style="font-size:12px;color:var(--ink-muted);font-family:var(--font-mono);">v20.11.0</span>
+        </div>
+
+        <!-- Chromium -->
+        <div style="border-bottom:1px solid var(--border-subtle);">
+          <div onClick="{{ toggleChromium }}" style="display:flex;align-items:center;gap:12px;padding:13px 22px;cursor:pointer;">
+            <span style="flex:none;width:20px;height:20px;border-radius:50%;border:2px solid var(--border);border-top-color:var(--accent);display:flex;animation:spin .8s linear infinite;"></span>
+            <span style="flex:1;font-size:14px;font-weight:500;">Chromium</span>
+            <div style="flex:none;width:80px;height:5px;border-radius:100px;background:var(--surface-subtle);overflow:hidden;">
+              <div style="width:45%;height:100%;border-radius:100px;background:repeating-linear-gradient(45deg,var(--accent),var(--accent) 7px,var(--accent-dark) 7px,var(--accent-dark) 14px);background-size:28px 28px;animation:barflow .6s linear infinite;"></div>
+            </div>
+            <span style="flex:none;width:18px;text-align:center;color:var(--ink-muted);font-size:11px;transition:transform .18s ease;transform:rotate({{ chromiumRot }});">▸</span>
+          </div>
+          <sc-if value="{{ chromiumOpen }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:0 22px 16px 54px;font-size:12.5px;color:var(--ink-secondary);line-height:1.7;">正在后台跑 <code style="font-family:var(--font-mono);background:var(--surface-subtle);padding:1px 5px;border-radius:4px;color:var(--accent-dark);">playwright install chromium</code>,下载浏览器内核可能要几十秒,期间别关页面;完成后这一行会自动变绿。</div>
+          </sc-if>
+        </div>
+
+        <!-- ffmpeg -->
+        <div style="border-bottom:1px solid var(--border-subtle);">
+          <div onClick="{{ toggleFfmpeg }}" style="display:flex;align-items:center;gap:12px;padding:13px 22px;cursor:pointer;">
+            <span style="flex:none;width:20px;height:20px;border-radius:50%;background:var(--red-bg);color:var(--red);display:flex;align-items:center;justify-content:center;font-size:12px;">!</span>
+            <span style="flex:1;font-size:14px;font-weight:500;">ffmpeg</span>
+            <button onClick="{{ recheck }}" style="flex:none;font-family:var(--font-sans);font-size:12px;color:var(--ink-secondary);background:transparent;border:1px solid var(--border);border-radius:8px;padding:6px 12px;cursor:pointer;">重新检测</button>
+            <span style="flex:none;width:18px;text-align:center;color:var(--ink-muted);font-size:11px;transition:transform .18s ease;transform:rotate({{ ffmpegRot }});">▸</span>
+          </div>
+          <sc-if value="{{ ffmpegOpen }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:0 22px 16px 54px;font-size:12.5px;color:var(--ink-secondary);line-height:1.7;">用于切音轨喂给 whisper。需自行安装,装好后点重新检测:
+              <div style="display:flex;align-items:center;gap:8px;background:var(--navy);border-radius:8px;padding:9px 12px;margin-top:8px;">
+                <code style="flex:1;font-family:var(--font-mono);font-size:12px;color:rgba(255,255,255,.9);">brew install ffmpeg</code>
+                <button style="flex:none;font-family:var(--font-sans);font-size:11px;color:rgba(255,255,255,.85);background:rgba(255,255,255,.12);border:none;border-radius:6px;padding:4px 10px;cursor:pointer;">复制</button>
+              </div>
+            </div>
+          </sc-if>
+        </div>
+
+        <!-- whisper -->
+        <div>
+          <div onClick="{{ toggleWhisper }}" style="display:flex;align-items:center;gap:12px;padding:13px 22px;cursor:pointer;">
+            <span style="flex:none;width:20px;height:20px;border-radius:50%;background:var(--amber-bg);color:var(--amber);display:flex;align-items:center;justify-content:center;font-size:12px;">!</span>
+            <span style="flex:1;font-size:14px;font-weight:500;">whisper</span>
+            <button style="flex:none;font-family:var(--font-sans);font-size:12px;color:#fff;background:var(--accent);border:none;border-radius:8px;padding:6px 14px;cursor:pointer;font-weight:500;">安装</button>
+            <span style="flex:none;width:18px;text-align:center;color:var(--ink-muted);font-size:11px;transition:transform .18s ease;transform:rotate({{ whisperRot }});">▸</span>
+          </div>
+          <sc-if value="{{ whisperOpen }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:0 22px 16px 54px;font-size:12.5px;color:var(--ink-secondary);line-height:1.7;">没字幕的视频靠它把口播转成文字。可点「安装」一键尝试,或自行安装:
+              <div style="display:flex;align-items:center;gap:8px;background:var(--navy);border-radius:8px;padding:9px 12px;margin-top:8px;">
+                <code style="flex:1;font-family:var(--font-mono);font-size:12px;color:rgba(255,255,255,.9);">pip install -U openai-whisper</code>
+                <button style="flex:none;font-family:var(--font-sans);font-size:11px;color:rgba(255,255,255,.85);background:rgba(255,255,255,.12);border:none;border-radius:6px;padding:4px 10px;cursor:pointer;">复制</button>
+              </div>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+    </div>
+
+    <!-- ② 抖音登录 -->
+    <div style="background:var(--surface-elevated);border:1px solid var(--border-subtle);border-radius:14px;box-shadow:0 2px 12px rgba(0,0,0,.04);margin-bottom:16px;">
+      <div onClick="{{ toggleDouyin }}" style="display:flex;align-items:center;gap:13px;padding:18px 22px;cursor:pointer;">
+        <span style="flex:none;width:28px;height:28px;border-radius:50%;background:var(--green-bg);color:var(--green);font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;">✓</span>
+        <div style="flex:1;">
+          <h3 style="margin:0;font-size:15px;font-weight:600;">抖音登录</h3>
+          <p style="margin:2px 0 0;font-size:12px;color:var(--ink-muted);">1 个有效 token</p>
+        </div>
+        <button onClick="{{ noop }}" style="flex:none;font-family:var(--font-sans);font-size:13px;color:var(--accent-dark);background:var(--accent-light);border:none;border-radius:8px;padding:8px 15px;cursor:pointer;font-weight:500;">+ 扫码加 token</button>
+        <span style="flex:none;width:18px;text-align:center;color:var(--ink-muted);font-size:11px;transition:transform .18s ease;transform:rotate({{ douyinRot }});">▸</span>
+      </div>
+      <sc-if value="{{ douyinOpen }}" hint-placeholder-val="{{ false }}">
+        <div style="padding:0 22px 18px 53px;font-size:12.5px;color:var(--ink-secondary);line-height:1.7;">点「扫码加 token」后会在本机弹出 Chrome 窗口,请在<b style="color:var(--ink);">那个窗口里</b>扫码 —— 网页不显示二维码,只在这里等它变绿。登录态(cookies)只存本机档案目录,不上传云端。</div>
+      </sc-if>
+    </div>
+
+    <!-- ③ Notion -->
+    <div style="background:var(--surface-elevated);border:1px solid var(--border-subtle);border-radius:14px;box-shadow:0 2px 12px rgba(0,0,0,.04);margin-bottom:16px;">
+      <div onClick="{{ toggleNotion }}" style="display:flex;align-items:center;gap:13px;padding:18px 22px 14px;cursor:pointer;">
+        <span style="flex:none;width:28px;height:28px;border-radius:50%;background:var(--green-bg);color:var(--green);font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;">✓</span>
+        <h3 style="flex:1;margin:0;font-size:15px;font-weight:600;">Notion</h3>
+        <span style="font-size:12px;color:var(--green);">已连通「抖音干货库」</span>
+        <span style="flex:none;width:18px;text-align:center;color:var(--ink-muted);font-size:11px;transition:transform .18s ease;transform:rotate({{ notionRot }});">▸</span>
+      </div>
+      <sc-if value="{{ notionOpen }}" hint-placeholder-val="{{ false }}">
+        <div style="padding:0 22px 8px 53px;font-size:12.5px;color:var(--ink-secondary);line-height:1.7;">在 notion.so/my-integrations 建集成 → 打开目标库 ··· → Connections 加上它 → 再把集成 token 和库 ID 填下面。</div>
+      </sc-if>
+      <div style="padding:8px 22px 20px;display:flex;flex-direction:column;gap:12px;">
+        <input type="password" value="secret_abc123def456" placeholder="Integration Token" style="font-family:var(--font-mono);font-size:13px;padding:11px 13px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--ink);outline:none;" />
+        <div style="display:flex;gap:10px;">
+          <input type="text" value="a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6" placeholder="Database ID" style="flex:1;font-family:var(--font-mono);font-size:13px;padding:11px 13px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--ink);outline:none;" />
+          <button style="flex:none;font-family:var(--font-sans);font-size:13px;color:#fff;background:var(--navy);border:none;border-radius:8px;padding:9px 18px;cursor:pointer;font-weight:500;">保存并测试</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ④ 收藏夹与定时 -->
+    <div style="background:var(--surface-elevated);border:1px solid var(--border-subtle);border-radius:14px;box-shadow:0 2px 12px rgba(0,0,0,.04);margin-bottom:16px;">
+      <div onClick="{{ toggleSchedule }}" style="display:flex;align-items:center;gap:13px;padding:18px 22px;cursor:pointer;">
+        <span style="flex:none;width:28px;height:28px;border-radius:50%;background:var(--amber-bg);color:var(--amber);font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;">④</span>
+        <div style="flex:1;">
+          <h3 style="margin:0;font-size:15px;font-weight:600;">收藏夹与定时</h3>
+          <p style="margin:2px 0 0;font-size:12px;color:var(--ink-muted);">2 个收藏夹 · 定时<b style="color:var(--amber);font-weight:600;">未开启</b></p>
+        </div>
+        <button onClick="{{ noop }}" style="flex:none;font-family:var(--font-sans);font-size:13px;color:#fff;background:var(--accent);border:none;border-radius:8px;padding:9px 18px;cursor:pointer;font-weight:500;">开启定时</button>
+        <span style="flex:none;width:18px;text-align:center;color:var(--ink-muted);font-size:11px;transition:transform .18s ease;transform:rotate({{ scheduleRot }});">▸</span>
+      </div>
+      <sc-if value="{{ scheduleOpen }}" hint-placeholder-val="{{ false }}">
+        <div style="padding:0 22px 18px 53px;font-size:12.5px;color:var(--ink-secondary);line-height:1.7;">已选「干货·学习」「做饭收藏」,每 60 分钟一轮、每轮最多 20 条。开启后服务自动跑,收藏夹与节奏细调请去 <code style="font-family:var(--font-mono);background:var(--surface-subtle);padding:1px 5px;border-radius:4px;color:var(--accent-dark);">/config</code>。</div>
+      </sc-if>
+    </div>
+
+    <!-- ⑤ 完成 -->
+    <div style="display:flex;align-items:center;gap:13px;background:var(--navy);border-radius:14px;box-shadow:0 4px 20px rgba(26,35,50,.18);padding:20px 22px;opacity:.78;">
+      <span style="flex:none;width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.12);color:rgba(255,255,255,.85);font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;">⑤</span>
+      <div style="flex:1;">
+        <h3 style="margin:0;font-size:15px;font-weight:600;color:#fff;">立即同步一轮</h3>
+        <p style="margin:2px 0 0;font-size:12px;color:rgba(255,255,255,.55);">还差 2 项就绪</p>
+      </div>
+      <button style="flex:none;font-family:var(--font-sans);font-size:13px;color:rgba(255,255,255,.45);background:rgba(255,255,255,.08);border:none;border-radius:8px;padding:10px 20px;cursor:not-allowed;font-weight:600;">立即同步</button>
+    </div>
+
+  </div>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { chromium:false, ffmpeg:false, whisper:false, douyin:false, notion:false, schedule:false };
+  toggle(k){ return (e)=>{ if(e) e.stopPropagation(); this.setState(s=>({ [k]: !s[k] })); }; }
+  renderVals(){
+    const s = this.state;
+    const rot = b => b ? '90deg' : '0deg';
+    return {
+      noop: (e)=>{ if(e) e.stopPropagation(); },
+      recheck: (e)=>{ if(e) e.stopPropagation(); },
+      toggleChromium: this.toggle('chromium'),
+      toggleFfmpeg: this.toggle('ffmpeg'),
+      toggleWhisper: this.toggle('whisper'),
+      toggleDouyin: this.toggle('douyin'),
+      toggleNotion: this.toggle('notion'),
+      toggleSchedule: this.toggle('schedule'),
+      chromiumOpen: s.chromium, ffmpegOpen: s.ffmpeg, whisperOpen: s.whisper,
+      douyinOpen: s.douyin, notionOpen: s.notion, scheduleOpen: s.schedule,
+      chromiumRot: rot(s.chromium), ffmpegRot: rot(s.ffmpeg), whisperRot: rot(s.whisper),
+      douyinRot: rot(s.douyin), notionRot: rot(s.notion), scheduleRot: rot(s.schedule),
+    };
+  }
+}
+</script>
+</body>
+</html>

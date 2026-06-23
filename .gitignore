@@ -1,0 +1,5 @@
+node_modules/
+workspace/
+.idea/
+.DS_Store
+*.log

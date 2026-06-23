@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Serif:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --surface:#fafbfc; --surface-elevated:#ffffff; --surface-subtle:#f0f2f4;
+    --ink:#1a2332; --ink-secondary:#536471; --ink-muted:#8899a6;
+    --border:#e1e4e8; --border-subtle:#eef0f2;
+    --accent:#4a7c6f; --accent-light:#e8f0ed; --accent-dark:#3a6359;
+    --navy:#1a2332; --green:#4a7a52; --green-bg:#eaf2ea;
+    --amber:#8a7040; --amber-bg:#f3efe6; --red:#9a5a55; --red-bg:#f5ece9;
+    --blue:#3a6391; --blue-bg:#e8eef5;
+    --font-sans:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    --font-serif:'Noto Serif',Georgia,serif;
+    --font-mono:'JetBrains Mono','Consolas',monospace;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:var(--font-sans);background:var(--surface);color:var(--ink);-webkit-font-smoothing:antialiased;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
+  ::-webkit-scrollbar{width:9px;height:9px;}
+  ::-webkit-scrollbar-thumb{background:#d4d9de;border-radius:100px;}
+</style>
+</helmet>
+
+<div style="min-height:100vh;display:flex;">
+
+  <aside style="flex:none;width:248px;background:var(--surface-elevated);border-right:1px solid var(--border-subtle);min-height:100vh;display:flex;flex-direction:column;padding:22px 16px;position:sticky;top:0;height:100vh;">
+    <div style="display:flex;align-items:center;gap:10px;padding:6px 8px 22px;">
+      <img src="assets/logo-small.svg" width="26" height="26" alt="" style="border-radius:6px;display:block;" />
+      <span style="font-family:var(--font-serif);font-size:15px;letter-spacing:.15em;color:var(--ink);">即见</span>
+    </div>
+    <a href="Transcribe.dc.html" style="display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:10px;text-decoration:none;color:var(--ink-secondary);font-size:13.5px;font-weight:500;margin-bottom:3px;" style-hover="background:rgba(0,0,0,.04);">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h10M4 18h7"/></svg>提取字幕
+    </a>
+    <a href="Config.dc.html" style="display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:10px;text-decoration:none;color:var(--ink-secondary);font-size:13.5px;font-weight:500;margin-bottom:3px;" style-hover="background:rgba(0,0,0,.04);">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-6.2-8.6"/><path d="M12 7v5l3 2"/></svg>自动同步
+    </a>
+    <a href="Tokens.dc.html" style="display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:10px;text-decoration:none;background:var(--accent-light);color:var(--accent-dark);font-size:13.5px;font-weight:600;margin-bottom:3px;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 5v6c0 5 3.5 8 8 11 4.5-3 8-6 8-11V5l-8-3z"/></svg>Token 管理
+    </a>
+    <a href="Setup Wizard.dc.html" style="display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:10px;text-decoration:none;color:var(--ink-secondary);font-size:13.5px;font-weight:500;" style-hover="background:rgba(0,0,0,.04);">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h18M3 12h18M3 17h18"/></svg>安装向导
+    </a>
+    <div style="margin-top:auto;display:flex;align-items:center;gap:7px;font-size:11px;color:var(--ink-muted);padding:8px 10px;">
+      <span style="width:6px;height:6px;border-radius:50%;background:var(--green);"></span>本地运行 · localhost:7777
+    </div>
+  </aside>
+
+  <main style="flex:1;min-width:0;padding:48px 40px 96px;">
+    <div style="max-width:760px;margin:0 auto;">
+
+      <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:8px;">
+        <div>
+          <div style="font-size:11px;letter-spacing:.08em;color:var(--accent);font-weight:600;margin-bottom:10px;">TOKEN POOL</div>
+          <h1 style="font-size:26px;font-weight:700;letter-spacing:-.02em;margin:0;line-height:1.15;">登录态 token 池</h1>
+        </div>
+        <div style="display:flex;gap:10px;flex:none;">
+          <button onClick="{{ refresh }}" style="font-family:var(--font-sans);font-size:13px;font-weight:500;color:var(--ink-secondary);background:var(--surface-elevated);border:1px solid var(--border);border-radius:9px;padding:9px 14px;cursor:pointer;display:inline-flex;align-items:center;gap:7px;" style-hover="border-color:var(--ink-muted);">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="transform:rotate({{ refreshRot }});transition:transform .5s ease;"><path d="M21 12a9 9 0 1 1-2.6-6.4M21 3v6h-6"/></svg>刷新
+          </button>
+          <button onClick="{{ openAdd }}" style="font-family:var(--font-sans);font-size:13px;font-weight:600;color:#fff;background:var(--navy);border:none;border-radius:9px;padding:9px 16px;cursor:pointer;" style-hover="background:#0f1620;">+ 添加 token</button>
+        </div>
+      </div>
+      <p style="margin:0 0 28px;font-size:13px;color:var(--ink-secondary);line-height:1.6;">一个 token = 一次扫码登录的浏览器档案。服务从池里轮换使用,失效自动跳过。<span style="color:var(--ink-muted);">{{ poolSummary }}</span></p>
+
+      <sc-for list="{{ tokens }}" as="t" hint-placeholder-count="3">
+        <div style="display:flex;align-items:center;gap:16px;background:var(--surface-elevated);border:1px solid var(--border-subtle);border-radius:13px;padding:18px 20px;margin-bottom:12px;" style-hover="border-color:var(--border);">
+          <span style="flex:none;width:40px;height:40px;border-radius:9px;background:{{ t.iconBg }};color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;">{{ t.iconChar }}</span>
+          <div style="flex:1;min-width:0;">
+            <div style="display:flex;align-items:center;gap:9px;margin-bottom:4px;">
+              <span style="font-size:14.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ t.nickname }}</span>
+              <span style="flex:none;display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;letter-spacing:.03em;padding:2px 8px;border-radius:6px;background:{{ t.statusBg }};color:{{ t.statusColor }};">
+                <span style="width:6px;height:6px;border-radius:50%;background:{{ t.statusColor }};animation:{{ t.dotAnim }};"></span>{{ t.statusLabel }}
+              </span>
+            </div>
+            <div style="font-size:12px;color:var(--ink-muted);display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+              <span style="font-family:var(--font-mono);">{{ t.uid }}</span>
+              <span style="color:var(--border);">·</span>
+              <span>{{ t.platformLabel }}</span>
+              <span style="color:var(--border);">·</span>
+              <span>{{ t.timeText }}</span>
+              <sc-if value="{{ t.showWarn }}" hint-placeholder-val="{{ false }}">
+                <span style="color:var(--amber);font-weight:500;">· 失败 {{ t.failureCount }} 次</span>
+              </sc-if>
+            </div>
+          </div>
+          <div style="flex:none;display:flex;gap:8px;">
+            <button onClick="{{ t.validate }}" style="font-family:var(--font-sans);font-size:12.5px;font-weight:500;color:var(--ink-secondary);background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:7px 13px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;" style-hover="border-color:var(--ink-muted);">
+              <sc-if value="{{ t.validating }}" hint-placeholder-val="{{ false }}"><span style="width:11px;height:11px;border-radius:50%;border:2px solid var(--border);border-top-color:var(--accent);display:block;animation:spin .8s linear infinite;"></span></sc-if>{{ t.validateLabel }}
+            </button>
+            <button onClick="{{ t.remove }}" style="font-family:var(--font-sans);font-size:12.5px;font-weight:500;color:var(--red);background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:7px 13px;cursor:pointer;" style-hover="background:var(--red-bg);border-color:#e6cfc9;">删除</button>
+          </div>
+        </div>
+      </sc-for>
+
+      <sc-if value="{{ isEmpty }}" hint-placeholder-val="{{ false }}">
+        <div style="text-align:center;padding:64px 24px;border:1px dashed var(--border);border-radius:14px;background:var(--surface-elevated);">
+          <div style="font-size:15px;font-weight:600;margin-bottom:6px;">池子还是空的</div>
+          <p style="margin:0 0 18px;font-size:13px;color:var(--ink-secondary);">添加第一个 token,扫码登录抖音,服务才能开始抓取。</p>
+          <button onClick="{{ openAdd }}" style="font-family:var(--font-sans);font-size:13px;font-weight:600;color:#fff;background:var(--navy);border:none;border-radius:9px;padding:10px 18px;cursor:pointer;">+ 添加第一个 token</button>
+        </div>
+      </sc-if>
+
+    </div>
+  </main>
+</div>
+
+<!-- ADD MODAL -->
+<sc-if value="{{ addOpen }}" hint-placeholder-val="{{ false }}">
+  <div onClick="{{ closeAdd }}" style="position:fixed;inset:0;background:rgba(15,20,25,.22);display:flex;align-items:center;justify-content:center;padding:24px;z-index:50;">
+    <div onClick="{{ stop }}" style="width:100%;max-width:420px;background:var(--surface-elevated);border-radius:16px;box-shadow:0 20px 60px rgba(15,20,25,.25);overflow:hidden;">
+      <div style="padding:22px 24px 18px;border-bottom:1px solid var(--border-subtle);">
+        <h3 style="margin:0;font-size:17px;font-weight:700;">添加 token</h3>
+      </div>
+
+      <sc-if value="{{ addWaiting }}" hint-placeholder-val="{{ false }}">
+        <div style="padding:32px 24px;text-align:center;">
+          <span style="display:inline-block;width:34px;height:34px;border-radius:50%;border:3px solid var(--accent-light);border-top-color:var(--accent);animation:spin .8s linear infinite;margin-bottom:18px;"></span>
+          <div style="font-size:15px;font-weight:600;margin-bottom:8px;">等待扫码…</div>
+          <p style="margin:0 auto;max-width:300px;font-size:13px;color:var(--ink-secondary);line-height:1.65;">请在本机弹出的 <b style="color:var(--ink);">Chrome 窗口</b>里扫码登录 —— 网页不显示二维码,登录成功后这里会自动确认。约 3 分钟超时。</p>
+          <button onClick="{{ cancelAdd }}" style="margin-top:20px;font-family:var(--font-sans);font-size:13px;font-weight:500;color:var(--ink-secondary);background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:9px 18px;cursor:pointer;">取消</button>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ addForm }}" hint-placeholder-val="{{ true }}">
+        <div style="padding:22px 24px 24px;">
+          <label style="display:block;font-size:11px;letter-spacing:.08em;color:var(--ink-muted);font-weight:600;margin-bottom:9px;">平台</label>
+          <div style="display:flex;gap:9px;margin-bottom:18px;">
+            <button onClick="{{ pickDouyin }}" style="flex:1;font-family:var(--font-sans);font-size:13px;font-weight:600;padding:10px;border-radius:9px;cursor:pointer;border:1px solid {{ dyBorder }};background:{{ dyBg }};color:{{ dyColor }};">抖音</button>
+            <button style="flex:1;font-family:var(--font-sans);font-size:13px;font-weight:500;padding:10px;border-radius:9px;cursor:not-allowed;border:1px solid var(--border-subtle);background:var(--surface);color:var(--ink-muted);">bilibili · 待支持</button>
+          </div>
+          <label style="display:block;font-size:11px;letter-spacing:.08em;color:var(--ink-muted);font-weight:600;margin-bottom:9px;">备注(可选)</label>
+          <input value="{{ label }}" onInput="{{ onLabel }}" placeholder="如:主号 / 备用号" style="width:100%;font-family:var(--font-sans);font-size:13.5px;padding:11px 13px;border:1px solid var(--border);border-radius:9px;background:var(--surface);color:var(--ink);outline:none;margin-bottom:20px;" style-focus="border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-light);" />
+          <div style="display:flex;gap:10px;">
+            <button onClick="{{ closeAdd }}" style="flex:none;font-family:var(--font-sans);font-size:13.5px;font-weight:500;color:var(--ink-secondary);background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:11px 18px;cursor:pointer;">取消</button>
+            <button onClick="{{ startLogin }}" style="flex:1;font-family:var(--font-sans);font-size:13.5px;font-weight:600;color:#fff;background:var(--navy);border:none;border-radius:9px;padding:11px;cursor:pointer;">开始扫码登录</button>
+          </div>
+        </div>
+      </sc-if>
+    </div>
+  </div>
+</sc-if>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = {
+    refreshRot: 0,
+    addOpen: false, addStage: "form", label: "",
+    tokens: [
+      { id:"t1", platform:"douyin", status:"valid", nickname:"工具控阿哲", uid:"uid_8821023", failureCount:0, validated:"3 分钟前验证", validating:false },
+      { id:"t2", platform:"douyin", status:"unknown", nickname:"—", uid:"未验证", failureCount:0, validated:"导入于 2 天前", validating:false },
+      { id:"t3", platform:"douyin", status:"invalid", nickname:"备用小号", uid:"uid_6610877", failureCount:3, validated:"1 小时前验证", validating:false },
+    ],
+  };
+
+  componentWillUnmount(){ if(this._t) clearTimeout(this._t); }
+
+  refresh = ()=> this.setState(s=>({ refreshRot: s.refreshRot + 360 }));
+  openAdd = ()=> this.setState({ addOpen:true, addStage:"form", label:"" });
+  closeAdd = ()=>{ if(this._t) clearTimeout(this._t); this.setState({ addOpen:false }); };
+  cancelAdd = ()=>{ if(this._t) clearTimeout(this._t); this.setState({ addStage:"form" }); };
+
+  startLogin = ()=>{
+    this.setState({ addStage:"waiting" });
+    this._t = setTimeout(()=>{
+      const n = this.state.tokens.length + 1;
+      const tok = { id:"t"+Date.now(), platform:"douyin", status:"valid",
+        nickname: this.state.label ? this.state.label : ("新账号 "+n), uid:"uid_"+Math.floor(1e7*Math.random()),
+        failureCount:0, validated:"刚刚验证", validating:false };
+      this.setState(s=>({ addOpen:false, tokens:[tok, ...s.tokens] }));
+    }, 3000);
+  };
+
+  validate(id){
+    this.setState(s=>({ tokens: s.tokens.map(t=> t.id===id ? {...t, validating:true} : t) }));
+    setTimeout(()=>{
+      this.setState(s=>({ tokens: s.tokens.map(t=> t.id===id ? {...t, validating:false, status:"valid", validated:"刚刚验证",
+        nickname: t.nickname==="—" ? "已验证账号" : t.nickname, uid: t.uid==="未验证" ? ("uid_"+Math.floor(1e7*Math.random())) : t.uid } : t) }));
+    }, 1600);
+  }
+  remove(id){ this.setState(s=>({ tokens: s.tokens.filter(t=>t.id!==id) })); }
+
+  renderVals(){
+    const s = this.state;
+    const cfg = {
+      valid:   { label:"有效", color:"var(--green)", bg:"var(--green-bg)", anim:"none" },
+      invalid: { label:"失效", color:"var(--red)", bg:"var(--red-bg)", anim:"none" },
+      unknown: { label:"未验证", color:"var(--ink-muted)", bg:"var(--surface-subtle)", anim:"none" },
+      logging_in:{ label:"登录中", color:"var(--blue)", bg:"var(--blue-bg)", anim:"pulse 1.4s ease infinite" },
+    };
+    const valid = s.tokens.filter(t=>t.status==="valid").length;
+    return {
+      refreshRot: s.refreshRot + "deg",
+      refresh: this.refresh, openAdd: this.openAdd, closeAdd: this.closeAdd, cancelAdd: this.cancelAdd,
+      stop: (e)=> e && e.stopPropagation(),
+      poolSummary: "· 共 " + s.tokens.length + " 个," + valid + " 个有效",
+      isEmpty: s.tokens.length === 0,
+      addOpen: s.addOpen,
+      addWaiting: s.addStage === "waiting",
+      addForm: s.addStage === "form",
+      label: s.label, onLabel: (e)=> this.setState({ label: e.target.value }),
+      pickDouyin: ()=>{}, startLogin: this.startLogin,
+      dyBorder:"var(--accent)", dyBg:"var(--accent-light)", dyColor:"var(--accent-dark)",
+      tokens: s.tokens.map(t=>{
+        const c = cfg[t.status] || cfg.unknown;
+        return {
+          iconChar:"抖", iconBg:"#1a1a1a",
+          nickname: t.nickname,
+          uid: t.uid,
+          platformLabel:"抖音",
+          timeText: t.validated,
+          statusLabel: c.label, statusColor: c.color, statusBg: c.bg, dotAnim: c.anim,
+          showWarn: t.failureCount > 0, failureCount: t.failureCount,
+          validating: t.validating,
+          validateLabel: t.validating ? "验证中" : "验证",
+          validate: ()=> this.validate(t.id),
+          remove: ()=> this.remove(t.id),
+        };
+      }),
+    };
+  }
+}
+</script>
+</body>
+</html>

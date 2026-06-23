@@ -1,0 +1,26 @@
+{
+  "name": "douyin-transcript-sync",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "login": "tsx src/browser.ts",
+    "discover": "tsx src/discover.ts",
+    "sync": "tsx src/sync.ts",
+    "one": "tsx src/one.ts",
+    "serve": "tsx src/server.ts",
+    "setup": "tsx src/setup.ts",
+    "preflight": "tsx src/preflight.ts",
+    "test": "tsx src/selftest.ts"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.8.0",
+    "playwright": "^1.49.0"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.12",
+    "@types/node": "^22.10.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}
