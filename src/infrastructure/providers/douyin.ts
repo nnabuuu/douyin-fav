@@ -182,20 +182,31 @@ export class DouyinProvider implements ContentProvider {
     return "https://www.douyin.com/";
   }
 
+  /** Logged in iff the auth cookie is present. sessionid is HttpOnly but lives in the context jar. */
+  async isLoggedIn(ctx: BrowserContext): Promise<boolean> {
+    try {
+      const cookies = await ctx.cookies("https://www.douyin.com");
+      return cookies.some((c) => /^(sessionid|sessionid_ss|sid_guard)$/.test(c.name) && !!c.value && c.value.length > 4);
+    } catch { return false; }
+  }
+
   async probe(ctx: BrowserContext): Promise<{ valid: boolean; account?: Account }> {
-    const page = await ctx.newPage();
+    if (!(await this.isLoggedIn(ctx))) return { valid: false };
+    // Logged in (cookie). Best-effort nickname/uid — valid regardless of whether we can read it.
     let account: Account | undefined;
+    const page = await ctx.newPage();
     page.on("response", async (r) => {
       if (!/aweme\/v1\/web\//.test(r.url())) return;
       try { const acc = findAccount(await r.json()); if (acc) account = acc; } catch { /* not json */ }
     });
     try {
       await page.goto("https://www.douyin.com/user/self", { waitUntil: "domcontentloaded" });
-      for (let i = 0; i < 16 && !account; i++) await page.waitForTimeout(500);
-    } finally {
+      for (let i = 0; i < 12 && !account; i++) await page.waitForTimeout(500);
+    } catch { /* keep valid even if the account read fails */ }
+    finally {
       await page.close().catch(() => {});
     }
-    return { valid: !!account, account };
+    return { valid: true, account };
   }
 }
 

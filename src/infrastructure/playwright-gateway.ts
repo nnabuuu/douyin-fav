@@ -71,19 +71,33 @@ export class PlaywrightGateway implements BrowserGateway, TokenAuthenticator {
     const provider = this.provider(token.platform);
     const ctx = await this.context(token.profileDir);
     const page = await ctx.newPage();
-    await page.goto(provider.loginUrl(), { waitUntil: "domcontentloaded" });
-    onProgress("请在弹出的浏览器窗口扫码登录…");
-    const deadline = Date.now() + 180_000;
+    let result: { valid: boolean; account?: Account } = { valid: false };
     try {
+      await page.goto(provider.loginUrl(), { waitUntil: "domcontentloaded" });
+      onProgress("请在弹出的浏览器窗口扫码登录…");
+      const deadline = Date.now() + 180_000;
       while (Date.now() < deadline) {
-        const r = await provider.probe(ctx);
-        if (r.valid) { onProgress(`登录成功:${r.account?.nickname ?? ""}`); return r; }
-        await page.waitForTimeout(3000);
+        // poll the auth cookie only — no extra page/tab churn while the user scans
+        if (await provider.isLoggedIn(ctx)) {
+          onProgress("检测到登录,读取账号…");
+          const r = await provider.probe(ctx).catch(() => ({ valid: true as const, account: undefined }));
+          result = { valid: true, account: r.account };
+          onProgress(`登录成功:${r.account?.nickname ?? ""}`);
+          break;
+        }
+        await page.waitForTimeout(2500);
       }
-      return { valid: false };
     } finally {
       await page.close().catch(() => {});
     }
+    if (!result.valid) await this.evict(token.profileDir); // close the dead window on timeout/cancel
+    return result;
+  }
+
+  /** Close + drop a profile's context (e.g. a failed login) so its window doesn't linger. */
+  private async evict(profileDir: string): Promise<void> {
+    const c = this.contexts.get(profileDir);
+    if (c) { await c.close().catch(() => {}); this.contexts.delete(profileDir); }
   }
 
   async closeAll(): Promise<void> {

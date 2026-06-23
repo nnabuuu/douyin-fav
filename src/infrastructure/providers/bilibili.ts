@@ -28,7 +28,12 @@ export class BilibiliProvider implements ContentProvider {
 
   loginUrl(): string { return "https://passport.bilibili.com/login"; }
 
-  async probe(_ctx: BrowserContext): Promise<{ valid: boolean; account?: Account }> {
-    return { valid: false };
+  async isLoggedIn(ctx: BrowserContext): Promise<boolean> {
+    try { const c = await ctx.cookies("https://www.bilibili.com"); return c.some((x) => x.name === "SESSDATA" && !!x.value); }
+    catch { return false; }
+  }
+
+  async probe(ctx: BrowserContext): Promise<{ valid: boolean; account?: Account }> {
+    return { valid: await this.isLoggedIn(ctx) };
   }
 }

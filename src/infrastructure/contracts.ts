@@ -27,6 +27,9 @@ export interface ContentProvider {
   listCollection(session: BrowserSession, folderUrl: string, log: (m: string) => void): Promise<CollectionItem[]>;
   /** Auth surface for this platform. */
   loginUrl(): string;
+  /** Cheap login check via the session cookie (no navigation) — used to poll during QR login. */
+  isLoggedIn(ctx: BrowserContext): Promise<boolean>;
+  /** Authoritative check: valid (cookie) + best-effort account info (navigates once). */
   probe(ctx: BrowserContext): Promise<{ valid: boolean; account?: Account }>;
 }
 
