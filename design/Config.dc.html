@@ -190,7 +190,13 @@
           <div style="font-size:15px;font-weight:600;">Notion</div>
           <span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:6px;background:var(--green-bg);color:var(--green);">已连通</span>
         </div>
-        <p style="margin:0 0 16px;font-size:12.5px;color:var(--ink-secondary);line-height:1.6;">notion.so/my-integrations 建集成 → 目标库 ··· → Connections 加上它 → 填下面。<b style="color:var(--ink);">不填也行</b>:同步照常转写存本地,只是不写 Notion。</p>
+        <p style="margin:0 0 16px;font-size:12.5px;color:var(--ink-secondary);line-height:1.75;">
+          配 3 步(<a href="https://github.com/nnabuuu/douyin-fav/blob/main/docs/notion-setup.md" target="_blank" style="color:var(--accent);text-decoration:none;font-weight:600;">完整 guide + 排错 ↗</a>):
+          ① <a href="https://www.notion.so/my-integrations" target="_blank" style="color:var(--accent);text-decoration:none;">建 integration</a> 复制 token;
+          ② <b style="color:var(--ink);">把目标库 ··· → Connections 加上它</b>(最易漏,漏了报「找不到库」);
+          ③ Database ID = 库 URL 里那段 32 位十六进制。填好点「保存并测试」。
+          <b style="color:var(--ink);">不填也行</b>:照常转写存本地,不写 Notion。
+        </p>
         <div style="display:flex;flex-direction:column;gap:11px;">
           <input value="{{ notionToken }}" onInput="{{ onNotionToken }}" type="password" placeholder="Integration Token" style="font-family:var(--font-mono);font-size:13px;padding:11px 13px;border:1px solid var(--border);border-radius:9px;background:var(--surface);color:var(--ink);outline:none;" style-focus="border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-light);" />
           <div style="display:flex;gap:10px;">

@@ -6,7 +6,8 @@ import type { BrowserSession, ContentProvider, Transcriber } from "../contracts.
 import { retry, pace } from "../net.js";
 
 const DETAIL = "/aweme/v1/web/aweme/detail";
-const LISTCOLL = "/aweme/v1/web/aweme/listcollection";
+// 全部收藏(aweme/listcollection)+ 命名收藏夹(collects/video/list)的视频列表接口
+const LISTCOLL = /(aweme\/listcollection|collects?\/video)/;
 const MAX_SCROLLS = 40;
 
 export class DouyinProvider implements ContentProvider {
@@ -154,12 +155,25 @@ export class DouyinProvider implements ContentProvider {
     const items = new Map<string, CollectionItem>();
     const page = await session.newPage();
     page.on("response", async (r) => {
-      if (!r.url().includes(LISTCOLL)) return;
+      if (!LISTCOLL.test(r.url())) return;
       try { for (const it of parseList(await r.json())) items.set(it.videoId, it); } catch { /* not json */ }
     });
+    // a `#收藏夹名` suffix means: open that specific named folder (its URL doesn't change,
+    // so we land on the folder view then click the card by name).
+    let folderName = "", navUrl = folderUrl;
+    try { const u = new URL(folderUrl); folderName = decodeURIComponent(u.hash.replace(/^#/, "")).trim(); u.hash = ""; navUrl = u.toString(); } catch { /* not a URL */ }
     try {
-      await page.goto(folderUrl, { waitUntil: "domcontentloaded" });
+      await page.goto(navUrl, { waitUntil: "domcontentloaded" });
       await page.waitForTimeout(1500);
+      if (folderName) {
+        log(`打开收藏夹「${folderName}」…`);
+        try {
+          const card = page.getByText(folderName, { exact: false }).first();
+          await card.waitFor({ state: "visible", timeout: 8000 });
+          await card.click();
+          await page.waitForTimeout(2000); // let the folder's video list fire
+        } catch { log(`没找到名为「${folderName}」的收藏夹卡片(名字对不上?),按当前页抓。`); }
+      }
       let stable = 0;
       for (let i = 0; i < MAX_SCROLLS && stable < 3; i++) {
         const before = items.size;
