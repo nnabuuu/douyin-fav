@@ -1,6 +1,7 @@
 /* Ports: interfaces the application depends on. Implemented by infrastructure adapters. */
 import type { Token, Platform, VideoResult, Account, CollectionItem } from "./model.js";
 import type { AppConfig } from "./config.js";
+import type { SyncRun } from "./sync.js";
 
 export interface TokenStore {
   list(): Token[];
@@ -42,4 +43,13 @@ export interface Exporter {
   has(videoId: string): Promise<boolean>;
   /** Returns "created" or "skipped" (already present / not configured). */
   export(result: VideoResult, cleaned: string, summary: string | undefined): Promise<"created" | "skipped">;
+}
+
+/** Persists sync-run history + a local index of already-exported videoIds. */
+export interface SyncStore {
+  listRuns(limit?: number): SyncRun[];      // most recent first
+  getRun(id: string): SyncRun | undefined;
+  saveRun(run: SyncRun): void;              // upsert + trim history
+  isExported(videoId: string): boolean;     // fast local dedup (skip without hitting Notion)
+  markExported(videoId: string): void;
 }

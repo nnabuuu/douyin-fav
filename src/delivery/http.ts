@@ -115,6 +115,13 @@ export function createHttp(deps: Deps): http.Server {
       if (method === "GET" && pathname === "/api/sync/status") return send(res, 200, sync.status());
       if (method === "POST" && pathname === "/api/sync/start") { sync.start(); return send(res, 200, sync.status()); }
       if (method === "POST" && pathname === "/api/sync/stop") { sync.stop(); return send(res, 200, sync.status()); }
+      if (method === "POST" && pathname === "/api/sync/cancel") { sync.cancel(); return send(res, 200, { cancelled: true }); }
+      if (method === "GET" && pathname === "/api/sync/runs") return send(res, 200, sync.history(Number(url.searchParams.get("limit")) || 20));
+      const runMatch = pathname.match(/^\/api\/sync\/runs\/(\w+)$/);
+      if (method === "GET" && runMatch) {
+        const r = sync.getRun(runMatch[1]);
+        return r ? send(res, 200, r) : send(res, 404, { error: "no such run" });
+      }
 
       // ── transcription jobs ──
       if (method === "POST" && pathname === "/api/jobs") {

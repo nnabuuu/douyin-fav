@@ -3,7 +3,7 @@ import assert from "node:assert";
 import { AuthError, CaptchaError, NoValidTokenError, resolvePlatform, type Token, type VideoResult } from "./domain/model.js";
 import { retry } from "./infrastructure/net.js";
 import { DEFAULT_CONFIG, mergeConfig, type AppConfig } from "./domain/config.js";
-import type { ConfigStore, Exporter, Extractor, TokenAuthenticator, TokenStore } from "./domain/ports.js";
+import type { ConfigStore, Exporter, Extractor, SyncStore, TokenAuthenticator, TokenStore } from "./domain/ports.js";
 import { TranscribeVideo } from "./application/transcribe-video.js";
 import { JobQueue } from "./application/job-queue.js";
 import { SyncService } from "./application/sync-service.js";
@@ -115,7 +115,7 @@ async function run() {
   assert.equal(parsed[0].videoId, "111");
   assert.equal(parsed[0].author, "a");
 
-  // 10) SyncService: idempotent dedup, budget caps NEW work, cache is free, failures don't abort
+  // 10) SyncService: dedup, per-run cap, failures don't abort, per-video records, 100 ceiling
   const sync = (opts: {
     items: string[]; perRun: number; existing?: string[];
     run: (id: string) => Promise<VideoResult>;
@@ -127,34 +127,40 @@ async function run() {
     const extractor = fakeExtractor({ listCollection: async () => opts.items.map((id) => ({ videoId: id, desc: "", author: "" })) });
     const exporter = new FakeExporter(opts.existing);
     const transcribe = { run: async (url: string) => opts.run(url.match(/video\/(\d+)/)![1]) } as unknown as TranscribeVideo;
-    return { svc: new SyncService(config, store, extractor, transcribe, new RawAnalyzer(), exporter), exporter };
+    const exported = new Set<string>();
+    const syncStore: SyncStore = {
+      listRuns: () => [], getRun: () => undefined, saveRun: () => {},
+      isExported: (id) => exported.has(id), markExported: (id) => { exported.add(id); },
+    };
+    return { svc: new SyncService(config, store, extractor, transcribe, new RawAnalyzer(), exporter, syncStore), exporter };
   };
-  const rid = (videoId: string, cached = false): VideoResult => ({
-    platform: "douyin", videoId, title: videoId, desc: "", author: "", transcript: "x", source: "asr", tokenId: "A", cached });
+  const rid = (videoId: string): VideoResult => ({
+    platform: "douyin", videoId, title: videoId, desc: "", author: "", transcript: "x", source: "asr", tokenId: "A", cached: false });
 
   const a = sync({ items: ["1", "2"], perRun: 10, run: async (id) => rid(id) });
-  let sum = await a.svc.runOnce();
-  assert.equal(sum.synced, 2);
+  let r = await a.svc.runOnce();
+  assert.equal(r.synced, 2);
   assert.deepEqual(a.exporter.created.sort(), ["1", "2"]);
+  assert.equal(r.items.filter((i) => i.status === "exported").length, 2); // per-video records
 
   const b = sync({ items: ["1", "2"], perRun: 10, existing: ["1"], run: async (id) => rid(id) });
-  sum = await b.svc.runOnce();
-  assert.equal(sum.synced, 1); // "1" already present → skipped, only "2" written
+  r = await b.svc.runOnce();
+  assert.equal(r.synced, 1); // "1" already in Notion → skipped, only "2" written
   assert.deepEqual(b.exporter.created, ["2"]);
 
-  const c = sync({ items: ["1", "2"], perRun: 1, run: async (id) => rid(id) });
-  sum = await c.svc.runOnce();
-  assert.equal(sum.synced, 1); // perRun budget caps NEW transcriptions
-
-  const d = sync({ items: ["1", "2"], perRun: 1, run: async (id) => rid(id, id === "1") });
-  sum = await d.svc.runOnce();
-  assert.equal(sum.synced, 2); // "1" cached (free), so "2" still fits the budget
+  const c = sync({ items: ["1", "2", "3"], perRun: 2, run: async (id) => rid(id) });
+  r = await c.svc.runOnce();
+  assert.equal(r.synced, 2); // cap stops the round at 2
 
   const e = sync({ items: ["1", "2"], perRun: 10, run: async (id) => { if (id === "1") throw new Error("boom"); return rid(id); } });
-  sum = await e.svc.runOnce();
-  assert.equal(sum.failed, 1);
-  assert.equal(sum.synced, 1); // one failure doesn't abort the round
-  assert.deepEqual(sum.errors, [{ id: "1", reason: "boom" }]); // P2: structured {id, reason}
+  r = await e.svc.runOnce();
+  assert.equal(r.failed, 1);
+  assert.equal(r.synced, 1); // one failure doesn't abort the round
+  const failed = r.items.find((i) => i.status === "failed");
+  assert.equal(failed?.videoId, "1"); assert.ok(failed?.reason?.includes("boom")); // per-video failure record
+
+  // 100 hard ceiling regardless of configured perRun
+  assert.equal(sync({ items: [], perRun: 500, run: async (id) => rid(id) }).svc.status().cap, 100);
 
   // P1: per-video export building blocks — analyze (passthrough) → idempotent export
   const exp = new FakeExporter();

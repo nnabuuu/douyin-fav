@@ -7,6 +7,7 @@ import { JobQueue } from "./application/job-queue.js";
 import { SyncService } from "./application/sync-service.js";
 import { FileTokenStore } from "./infrastructure/file-token-store.js";
 import { FileConfigStore } from "./infrastructure/file-config-store.js";
+import { FileSyncStore } from "./infrastructure/file-sync-store.js";
 import { WhisperTranscriber } from "./infrastructure/whisper-transcriber.js";
 import { RawAnalyzer } from "./infrastructure/raw-analyzer.js";
 import { NotionExporter } from "./infrastructure/notion-exporter.js";
@@ -40,7 +41,8 @@ export function compose() {
   const admin = new TokenAdmin(store, gateway);
   const analyzer = new RawAnalyzer();
   const exporter = new NotionExporter(config);
-  const sync = new SyncService(config, store, extractor, transcribe, analyzer, exporter);
+  const syncStore = new FileSyncStore();
+  const sync = new SyncService(config, store, extractor, transcribe, analyzer, exporter, syncStore);
   const jobs = new JobQueue<VideoResult>((url, log) => transcribe.run(url, log), classifyError);
   const systemCheck = new SystemCheck();
   return { store, config, gateway, extractor, transcribe, admin, analyzer, exporter, sync, jobs, systemCheck };
