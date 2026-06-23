@@ -182,7 +182,13 @@
             <button onClick="{{ f.remove }}" style="flex:none;width:42px;font-family:var(--font-sans);font-size:16px;color:var(--ink-muted);background:var(--surface);border:1px solid var(--border);border-radius:9px;cursor:pointer;" style-hover="color:var(--red);border-color:#e6cfc9;">×</button>
           </div>
         </sc-for>
-        <button onClick="{{ addFolder }}" style="font-family:var(--font-sans);font-size:13px;font-weight:500;color:var(--accent-dark);background:var(--accent-light);border:none;border-radius:9px;padding:9px 15px;cursor:pointer;">+ 添加收藏夹</button>
+        <div style="display:flex;align-items:center;gap:12px;margin-top:2px;">
+          <button onClick="{{ addFolder }}" style="flex:none;font-family:var(--font-sans);font-size:13px;font-weight:500;color:var(--accent-dark);background:var(--accent-light);border:none;border-radius:9px;padding:9px 15px;cursor:pointer;">+ 添加收藏夹</button>
+          <sc-if value="{{ dirty }}" hint-placeholder-val="{{ false }}">
+            <span style="flex:1;font-size:12px;color:var(--amber);font-weight:600;">● 改动还没保存,点右边 →</span>
+            <button onClick="{{ save }}" style="flex:none;font-family:var(--font-sans);font-size:13px;font-weight:600;color:#fff;background:var(--accent);border:none;border-radius:9px;padding:9px 16px;cursor:pointer;">保存改动</button>
+          </sc-if>
+        </div>
       </div>
 
       <!-- 3. NOTION -->
