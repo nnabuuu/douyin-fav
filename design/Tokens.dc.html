@@ -156,39 +156,54 @@ class Component extends DCLogic {
   state = {
     refreshRot: 0,
     addOpen: false, addStage: "form", label: "",
-    tokens: [
-      { id:"t1", platform:"douyin", status:"valid", nickname:"工具控阿哲", uid:"uid_8821023", failureCount:0, validated:"3 分钟前验证", validating:false },
-      { id:"t2", platform:"douyin", status:"unknown", nickname:"—", uid:"未验证", failureCount:0, validated:"导入于 2 天前", validating:false },
-      { id:"t3", platform:"douyin", status:"invalid", nickname:"备用小号", uid:"uid_6610877", failureCount:3, validated:"1 小时前验证", validating:false },
-    ],
+    tokens: [], loading: true,
   };
 
+  _q(p){ const t = new URLSearchParams(location.search).get("token"); return t ? p + (p.indexOf("?")>=0?"&":"?") + "token=" + t : p; }
+  componentDidMount(){ this._load(); }
   componentWillUnmount(){ if(this._t) clearTimeout(this._t); }
+  async _load(){
+    try { const list = await (await fetch(this._q("/api/tokens"))).json(); this.setState({ tokens: Array.isArray(list) ? list : [], loading:false }); }
+    catch(e){ this.setState({ loading:false }); }
+  }
+  _rel(iso){
+    if(!iso) return "";
+    const d = (Date.now() - new Date(iso).getTime())/1000;
+    if(d < 60) return "刚刚";
+    if(d < 3600) return Math.floor(d/60)+" 分钟前";
+    if(d < 86400) return Math.floor(d/3600)+" 小时前";
+    return Math.floor(d/86400)+" 天前";
+  }
 
-  refresh = ()=> this.setState(s=>({ refreshRot: s.refreshRot + 360 }));
+  refresh = ()=>{ this.setState(s=>({ refreshRot: s.refreshRot + 360 })); this._load(); };
   openAdd = ()=> this.setState({ addOpen:true, addStage:"form", label:"" });
   closeAdd = ()=>{ if(this._t) clearTimeout(this._t); this.setState({ addOpen:false }); };
   cancelAdd = ()=>{ if(this._t) clearTimeout(this._t); this.setState({ addStage:"form" }); };
 
-  startLogin = ()=>{
+  startLogin = async ()=>{
     this.setState({ addStage:"waiting" });
-    this._t = setTimeout(()=>{
-      const n = this.state.tokens.length + 1;
-      const tok = { id:"t"+Date.now(), platform:"douyin", status:"valid",
-        nickname: this.state.label ? this.state.label : ("新账号 "+n), uid:"uid_"+Math.floor(1e7*Math.random()),
-        failureCount:0, validated:"刚刚验证", validating:false };
-      this.setState(s=>({ addOpen:false, tokens:[tok, ...s.tokens] }));
-    }, 3000);
+    try {
+      const tok = await (await fetch(this._q("/api/tokens"), { method:"POST", headers:{"content-type":"application/json"}, body: JSON.stringify({ platform:"douyin", label:this.state.label }) })).json();
+      this._pollLogin(tok.id, 0);
+    } catch(e){ this.setState({ addStage:"form" }); }
+  };
+  _pollLogin = async (id, n)=>{
+    let t = null;
+    try { t = await (await fetch(this._q("/api/tokens/"+id))).json(); } catch(e){}
+    if(t && (t.status === "valid" || t.status === "invalid")){ await this._load(); this.setState({ addOpen:false, addStage:"form" }); return; }
+    if(n > 80){ await this._load(); this.setState({ addOpen:false }); return; }
+    this._t = setTimeout(()=> this._pollLogin(id, n+1), 3000);
   };
 
   validate(id){
-    this.setState(s=>({ tokens: s.tokens.map(t=> t.id===id ? {...t, validating:true} : t) }));
-    setTimeout(()=>{
-      this.setState(s=>({ tokens: s.tokens.map(t=> t.id===id ? {...t, validating:false, status:"valid", validated:"刚刚验证",
-        nickname: t.nickname==="—" ? "已验证账号" : t.nickname, uid: t.uid==="未验证" ? ("uid_"+Math.floor(1e7*Math.random())) : t.uid } : t) }));
-    }, 1600);
+    this.setState(s=>({ tokens: s.tokens.map(t=> t.id===id ? {...t, _validating:true} : t) }));
+    fetch(this._q("/api/tokens/"+id+"/validate"), { method:"POST" }).then(r=>r.json()).then(u=>{
+      this.setState(s=>({ tokens: s.tokens.map(t=> t.id===id ? {...u, _validating:false} : t) }));
+    }).catch(()=> this.setState(s=>({ tokens: s.tokens.map(t=> t.id===id ? {...t, _validating:false} : t) })));
   }
-  remove(id){ this.setState(s=>({ tokens: s.tokens.filter(t=>t.id!==id) })); }
+  remove(id){
+    fetch(this._q("/api/tokens/"+id), { method:"DELETE" }).then(()=> this.setState(s=>({ tokens: s.tokens.filter(t=>t.id!==id) })));
+  }
 
   renderVals(){
     const s = this.state;
@@ -213,16 +228,18 @@ class Component extends DCLogic {
       dyBorder:"var(--accent)", dyBg:"var(--accent-light)", dyColor:"var(--accent-dark)",
       tokens: s.tokens.map(t=>{
         const c = cfg[t.status] || cfg.unknown;
+        const acc = t.account || {};
+        const timeText = t.lastValidatedAt ? (this._rel(t.lastValidatedAt)+" 验证") : ("导入于 " + (this._rel(t.createdAt) || "刚刚"));
         return {
           iconChar:"抖", iconBg:"#1a1a1a",
-          nickname: t.nickname,
-          uid: t.uid,
+          nickname: acc.nickname || t.label || "—",
+          uid: acc.uid || "未验证",
           platformLabel:"抖音",
-          timeText: t.validated,
+          timeText,
           statusLabel: c.label, statusColor: c.color, statusBg: c.bg, dotAnim: c.anim,
           showWarn: t.failureCount > 0, failureCount: t.failureCount,
-          validating: t.validating,
-          validateLabel: t.validating ? "验证中" : "验证",
+          validating: t._validating,
+          validateLabel: t._validating ? "验证中" : "验证",
           validate: ()=> this.validate(t.id),
           remove: ()=> this.remove(t.id),
         };

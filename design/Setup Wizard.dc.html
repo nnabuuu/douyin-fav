@@ -70,13 +70,13 @@
     <div style="background:var(--surface-elevated);border:1px solid var(--border-subtle);border-radius:14px;padding:18px 22px;box-shadow:0 2px 12px rgba(0,0,0,.04);margin-bottom:24px;">
       <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:11px;">
         <div style="display:flex;align-items:baseline;gap:8px;">
-          <span style="font-size:20px;font-weight:700;">4</span>
+          <span style="font-size:20px;font-weight:700;">{{ readyCount }}</span>
           <span style="font-size:13px;color:var(--ink-muted);">/ 6 项就绪</span>
         </div>
-        <span style="font-size:12px;color:var(--accent);font-weight:600;">就快好了</span>
+        <span style="font-size:12px;color:var(--accent);font-weight:600;">{{ readyHint }}</span>
       </div>
       <div style="height:8px;border-radius:100px;background:var(--surface-subtle);overflow:hidden;">
-        <div style="width:66%;height:100%;border-radius:100px;background:linear-gradient(90deg,var(--accent),var(--accent-dark));"></div>
+        <div style="width:{{ pct }};height:100%;border-radius:100px;background:linear-gradient(90deg,var(--accent),var(--accent-dark));"></div>
       </div>
     </div>
 
@@ -89,74 +89,36 @@
       </div>
       <div style="border-top:1px solid var(--border-subtle);">
 
-        <div style="display:flex;align-items:center;gap:12px;padding:13px 22px;border-bottom:1px solid var(--border-subtle);">
-          <span style="flex:none;width:20px;height:20px;border-radius:50%;background:var(--green-bg);color:var(--green);display:flex;align-items:center;justify-content:center;font-size:11px;">✓</span>
-          <span style="flex:1;font-size:14px;font-weight:500;">Node.js</span>
-          <span style="font-size:12px;color:var(--ink-muted);font-family:var(--font-mono);">v20.11.0</span>
-        </div>
-
-        <!-- Chromium -->
-        <div style="border-bottom:1px solid var(--border-subtle);">
-          <div onClick="{{ toggleChromium }}" style="display:flex;align-items:center;gap:12px;padding:13px 22px;cursor:pointer;">
-            <span style="flex:none;width:20px;height:20px;border-radius:50%;border:2px solid var(--border);border-top-color:var(--accent);display:flex;animation:spin .8s linear infinite;"></span>
-            <span style="flex:1;font-size:14px;font-weight:500;">Chromium</span>
-            <div style="flex:none;width:80px;height:5px;border-radius:100px;background:var(--surface-subtle);overflow:hidden;">
-              <div style="width:45%;height:100%;border-radius:100px;background:repeating-linear-gradient(45deg,var(--accent),var(--accent) 7px,var(--accent-dark) 7px,var(--accent-dark) 14px);background-size:28px 28px;animation:barflow .6s linear infinite;"></div>
+        <sc-for list="{{ deps }}" as="d" hint-placeholder-count="4">
+          <div style="border-bottom:1px solid var(--border-subtle);">
+            <div style="display:flex;align-items:center;gap:12px;padding:13px 22px;">
+              <span style="flex:none;width:20px;height:20px;border-radius:50%;background:{{ d.iconBg }};color:{{ d.iconColor }};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;">{{ d.iconChar }}</span>
+              <span style="flex:1;font-size:14px;font-weight:500;">{{ d.name }}</span>
+              <span style="font-size:12px;color:var(--ink-muted);font-family:var(--font-mono);">{{ d.detail }}</span>
+              <sc-if value="{{ d.showInstall }}" hint-placeholder-val="{{ false }}">
+                <button onClick="{{ d.install }}" style="flex:none;font-family:var(--font-sans);font-size:12px;color:#fff;background:var(--accent);border:none;border-radius:8px;padding:6px 14px;cursor:pointer;font-weight:500;">{{ d.installLabel }}</button>
+              </sc-if>
+              <button onClick="{{ recheck }}" style="flex:none;font-family:var(--font-sans);font-size:12px;color:var(--ink-secondary);background:transparent;border:1px solid var(--border);border-radius:8px;padding:6px 12px;cursor:pointer;">重新检测</button>
             </div>
-            <span style="flex:none;width:18px;text-align:center;color:var(--ink-muted);font-size:11px;transition:transform .18s ease;transform:rotate({{ chromiumRot }});">▸</span>
-          </div>
-          <sc-if value="{{ chromiumOpen }}" hint-placeholder-val="{{ false }}">
-            <div style="padding:0 22px 16px 54px;font-size:12.5px;color:var(--ink-secondary);line-height:1.7;">正在后台跑 <code style="font-family:var(--font-mono);background:var(--surface-subtle);padding:1px 5px;border-radius:4px;color:var(--accent-dark);">playwright install chromium</code>,下载浏览器内核可能要几十秒,期间别关页面;完成后这一行会自动变绿。</div>
-          </sc-if>
-        </div>
-
-        <!-- ffmpeg -->
-        <div style="border-bottom:1px solid var(--border-subtle);">
-          <div onClick="{{ toggleFfmpeg }}" style="display:flex;align-items:center;gap:12px;padding:13px 22px;cursor:pointer;">
-            <span style="flex:none;width:20px;height:20px;border-radius:50%;background:var(--red-bg);color:var(--red);display:flex;align-items:center;justify-content:center;font-size:12px;">!</span>
-            <span style="flex:1;font-size:14px;font-weight:500;">ffmpeg</span>
-            <button onClick="{{ recheck }}" style="flex:none;font-family:var(--font-sans);font-size:12px;color:var(--ink-secondary);background:transparent;border:1px solid var(--border);border-radius:8px;padding:6px 12px;cursor:pointer;">重新检测</button>
-            <span style="flex:none;width:18px;text-align:center;color:var(--ink-muted);font-size:11px;transition:transform .18s ease;transform:rotate({{ ffmpegRot }});">▸</span>
-          </div>
-          <sc-if value="{{ ffmpegOpen }}" hint-placeholder-val="{{ false }}">
-            <div style="padding:0 22px 16px 54px;font-size:12.5px;color:var(--ink-secondary);line-height:1.7;">用于切音轨喂给 whisper。需自行安装,装好后点重新检测:
-              <div style="display:flex;align-items:center;gap:8px;background:var(--navy);border-radius:8px;padding:9px 12px;margin-top:8px;">
-                <code style="flex:1;font-family:var(--font-mono);font-size:12px;color:rgba(255,255,255,.9);">brew install ffmpeg</code>
-                <button style="flex:none;font-family:var(--font-sans);font-size:11px;color:rgba(255,255,255,.85);background:rgba(255,255,255,.12);border:none;border-radius:6px;padding:4px 10px;cursor:pointer;">复制</button>
+            <sc-if value="{{ d.showHint }}" hint-placeholder-val="{{ false }}">
+              <div style="padding:0 22px 14px 54px;font-size:12.5px;color:var(--ink-secondary);line-height:1.7;">
+                <code style="font-family:var(--font-mono);background:var(--surface-subtle);padding:2px 7px;border-radius:5px;color:var(--accent-dark);">{{ d.fixHint }}</code>
               </div>
-            </div>
-          </sc-if>
-        </div>
-
-        <!-- whisper -->
-        <div>
-          <div onClick="{{ toggleWhisper }}" style="display:flex;align-items:center;gap:12px;padding:13px 22px;cursor:pointer;">
-            <span style="flex:none;width:20px;height:20px;border-radius:50%;background:var(--amber-bg);color:var(--amber);display:flex;align-items:center;justify-content:center;font-size:12px;">!</span>
-            <span style="flex:1;font-size:14px;font-weight:500;">whisper</span>
-            <button style="flex:none;font-family:var(--font-sans);font-size:12px;color:#fff;background:var(--accent);border:none;border-radius:8px;padding:6px 14px;cursor:pointer;font-weight:500;">安装</button>
-            <span style="flex:none;width:18px;text-align:center;color:var(--ink-muted);font-size:11px;transition:transform .18s ease;transform:rotate({{ whisperRot }});">▸</span>
+            </sc-if>
           </div>
-          <sc-if value="{{ whisperOpen }}" hint-placeholder-val="{{ false }}">
-            <div style="padding:0 22px 16px 54px;font-size:12.5px;color:var(--ink-secondary);line-height:1.7;">没字幕的视频靠它把口播转成文字。可点「安装」一键尝试,或自行安装:
-              <div style="display:flex;align-items:center;gap:8px;background:var(--navy);border-radius:8px;padding:9px 12px;margin-top:8px;">
-                <code style="flex:1;font-family:var(--font-mono);font-size:12px;color:rgba(255,255,255,.9);">pip install -U openai-whisper</code>
-                <button style="flex:none;font-family:var(--font-sans);font-size:11px;color:rgba(255,255,255,.85);background:rgba(255,255,255,.12);border:none;border-radius:6px;padding:4px 10px;cursor:pointer;">复制</button>
-              </div>
-            </div>
-          </sc-if>
-        </div>
+        </sc-for>
       </div>
     </div>
 
     <!-- ② 抖音登录 -->
     <div style="background:var(--surface-elevated);border:1px solid var(--border-subtle);border-radius:14px;box-shadow:0 2px 12px rgba(0,0,0,.04);margin-bottom:16px;">
       <div onClick="{{ toggleDouyin }}" style="display:flex;align-items:center;gap:13px;padding:18px 22px;cursor:pointer;">
-        <span style="flex:none;width:28px;height:28px;border-radius:50%;background:var(--green-bg);color:var(--green);font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;">✓</span>
+        <span style="flex:none;width:28px;height:28px;border-radius:50%;background:{{ tokenIconBg }};color:{{ tokenIconColor }};font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;">{{ tokenIconChar }}</span>
         <div style="flex:1;">
           <h3 style="margin:0;font-size:15px;font-weight:600;">抖音登录</h3>
-          <p style="margin:2px 0 0;font-size:12px;color:var(--ink-muted);">1 个有效 token</p>
+          <p style="margin:2px 0 0;font-size:12px;color:var(--ink-muted);">{{ tokenText }} <span style="color:var(--accent);">{{ addMsg }}</span></p>
         </div>
-        <button onClick="{{ noop }}" style="flex:none;font-family:var(--font-sans);font-size:13px;color:var(--accent-dark);background:var(--accent-light);border:none;border-radius:8px;padding:8px 15px;cursor:pointer;font-weight:500;">+ 扫码加 token</button>
+        <button onClick="{{ addToken }}" style="flex:none;font-family:var(--font-sans);font-size:13px;color:var(--accent-dark);background:var(--accent-light);border:none;border-radius:8px;padding:8px 15px;cursor:pointer;font-weight:500;">+ 扫码加 token</button>
         <span style="flex:none;width:18px;text-align:center;color:var(--ink-muted);font-size:11px;transition:transform .18s ease;transform:rotate({{ douyinRot }});">▸</span>
       </div>
       <sc-if value="{{ douyinOpen }}" hint-placeholder-val="{{ false }}">
@@ -167,19 +129,19 @@
     <!-- ③ Notion -->
     <div style="background:var(--surface-elevated);border:1px solid var(--border-subtle);border-radius:14px;box-shadow:0 2px 12px rgba(0,0,0,.04);margin-bottom:16px;">
       <div onClick="{{ toggleNotion }}" style="display:flex;align-items:center;gap:13px;padding:18px 22px 14px;cursor:pointer;">
-        <span style="flex:none;width:28px;height:28px;border-radius:50%;background:var(--green-bg);color:var(--green);font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;">✓</span>
+        <span style="flex:none;width:28px;height:28px;border-radius:50%;background:{{ notionIconBg }};color:{{ notionIconColor }};font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;">{{ notionIconChar }}</span>
         <h3 style="flex:1;margin:0;font-size:15px;font-weight:600;">Notion</h3>
-        <span style="font-size:12px;color:var(--green);">已连通「抖音干货库」</span>
+        <span style="font-size:12px;color:{{ notionIconColor }};">{{ notionText }}</span>
         <span style="flex:none;width:18px;text-align:center;color:var(--ink-muted);font-size:11px;transition:transform .18s ease;transform:rotate({{ notionRot }});">▸</span>
       </div>
       <sc-if value="{{ notionOpen }}" hint-placeholder-val="{{ false }}">
         <div style="padding:0 22px 8px 53px;font-size:12.5px;color:var(--ink-secondary);line-height:1.7;">在 notion.so/my-integrations 建集成 → 打开目标库 ··· → Connections 加上它 → 再把集成 token 和库 ID 填下面。</div>
       </sc-if>
       <div style="padding:8px 22px 20px;display:flex;flex-direction:column;gap:12px;">
-        <input type="password" value="secret_abc123def456" placeholder="Integration Token" style="font-family:var(--font-mono);font-size:13px;padding:11px 13px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--ink);outline:none;" />
+        <input type="password" value="{{ notionTokenVal }}" onInput="{{ onNotionToken }}" placeholder="Integration Token" style="font-family:var(--font-mono);font-size:13px;padding:11px 13px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--ink);outline:none;" />
         <div style="display:flex;gap:10px;">
-          <input type="text" value="a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6" placeholder="Database ID" style="flex:1;font-family:var(--font-mono);font-size:13px;padding:11px 13px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--ink);outline:none;" />
-          <button style="flex:none;font-family:var(--font-sans);font-size:13px;color:#fff;background:var(--navy);border:none;border-radius:8px;padding:9px 18px;cursor:pointer;font-weight:500;">保存并测试</button>
+          <input type="text" value="{{ databaseIdVal }}" onInput="{{ onDbId }}" placeholder="Database ID" style="flex:1;font-family:var(--font-mono);font-size:13px;padding:11px 13px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--ink);outline:none;" />
+          <button onClick="{{ saveNotion }}" style="flex:none;font-family:var(--font-sans);font-size:13px;color:#fff;background:var(--navy);border:none;border-radius:8px;padding:9px 18px;cursor:pointer;font-weight:500;">{{ notionBtnLabel }}</button>
         </div>
       </div>
     </div>
@@ -190,9 +152,9 @@
         <span style="flex:none;width:28px;height:28px;border-radius:50%;background:var(--amber-bg);color:var(--amber);font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;">④</span>
         <div style="flex:1;">
           <h3 style="margin:0;font-size:15px;font-weight:600;">收藏夹与定时</h3>
-          <p style="margin:2px 0 0;font-size:12px;color:var(--ink-muted);">2 个收藏夹 · 定时<b style="color:var(--amber);font-weight:600;">未开启</b></p>
+          <p style="margin:2px 0 0;font-size:12px;color:var(--ink-muted);">{{ scheduleText }}</p>
         </div>
-        <button onClick="{{ noop }}" style="flex:none;font-family:var(--font-sans);font-size:13px;color:#fff;background:var(--accent);border:none;border-radius:8px;padding:9px 18px;cursor:pointer;font-weight:500;">开启定时</button>
+        <button onClick="{{ startSched }}" style="flex:none;font-family:var(--font-sans);font-size:13px;color:#fff;background:var(--accent);border:none;border-radius:8px;padding:9px 18px;cursor:pointer;font-weight:500;">开启定时</button>
         <span style="flex:none;width:18px;text-align:center;color:var(--ink-muted);font-size:11px;transition:transform .18s ease;transform:rotate({{ scheduleRot }});">▸</span>
       </div>
       <sc-if value="{{ scheduleOpen }}" hint-placeholder-val="{{ false }}">
@@ -205,7 +167,7 @@
       <span style="flex:none;width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.12);color:rgba(255,255,255,.85);font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;">⑤</span>
       <div style="flex:1;">
         <h3 style="margin:0;font-size:15px;font-weight:600;color:#fff;">立即同步一轮</h3>
-        <p style="margin:2px 0 0;font-size:12px;color:rgba(255,255,255,.55);">还差 2 项就绪</p>
+        <p style="margin:2px 0 0;font-size:12px;color:rgba(255,255,255,.55);">{{ readyHint }}</p>
       </div>
       <button style="flex:none;font-family:var(--font-sans);font-size:13px;color:rgba(255,255,255,.45);background:rgba(255,255,255,.08);border:none;border-radius:8px;padding:10px 20px;cursor:not-allowed;font-weight:600;">立即同步</button>
     </div>
@@ -217,24 +179,69 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script>
 class Component extends DCLogic {
-  state = { chromium:false, ffmpeg:false, whisper:false, douyin:false, notion:false, schedule:false };
+  state = { status:null, installing:{}, douyin:false, notion:false, schedule:false, addMsg:"", nToken:"", nDb:"", nMsg:"" };
+  _q(p){ const t = new URLSearchParams(location.search).get("token"); return t ? p + (p.indexOf("?")>=0?"&":"?") + "token=" + t : p; }
+  componentDidMount(){ this._load(); }
+  componentWillUnmount(){ if(this._t) clearTimeout(this._t); }
+  async _load(){
+    try {
+      const status = await (await fetch(this._q("/api/setup/status"))).json();
+      const cfg = await (await fetch(this._q("/api/config"))).json();
+      this.setState({ status, nToken: (cfg.notion&&cfg.notion.token)||"", nDb: (cfg.notion&&cfg.notion.databaseId)||"" });
+    } catch(e){}
+  }
+  saveNotion = async ()=>{
+    this.setState({ nMsg:"测试中…" });
+    await fetch(this._q("/api/config"),{method:"PUT",headers:{"content-type":"application/json"},body:JSON.stringify({notion:{token:this.state.nToken,databaseId:this.state.nDb}})});
+    try { const r = await (await fetch(this._q("/api/notion/test"),{method:"POST"})).json(); this.setState({ nMsg: r.ok?"已连接 ✓":"失败,检查共享" }); this._load(); }
+    catch(e){ this.setState({ nMsg:"测试失败" }); }
+  };
+  _install(key){
+    this.setState(s=>({ installing:{...s.installing, [key]:true} }));
+    fetch(this._q("/api/setup/install/"+key), { method:"POST" }).then(r=>r.json()).then(()=>{
+      this.setState(s=>({ installing:{...s.installing, [key]:false} })); this._load();
+    }).catch(()=> this.setState(s=>({ installing:{...s.installing, [key]:false} })));
+  }
+  addToken = async ()=>{
+    this.setState({ addMsg:"已弹出 Chrome 窗口,请扫码…" });
+    try { const tok = await (await fetch(this._q("/api/tokens"), {method:"POST",headers:{"content-type":"application/json"},body:"{}"})).json(); this._pollToken(tok.id, 0); }
+    catch(e){ this.setState({ addMsg:"发起失败" }); }
+  };
+  _pollToken = async (id,n)=>{
+    let t=null; try{ t=await (await fetch(this._q("/api/tokens/"+id))).json(); }catch(e){}
+    if(t && (t.status==="valid"||t.status==="invalid")){ this.setState({ addMsg: t.status==="valid"?"已添加 ✓":"未完成,可重试" }); this._load(); return; }
+    if(n>80){ this._load(); return; }
+    this._t=setTimeout(()=>this._pollToken(id,n+1),3000);
+  };
+  startSched = async ()=>{
+    await fetch(this._q("/api/config"),{method:"PUT",headers:{"content-type":"application/json"},body:JSON.stringify({schedule:{enabled:true}})});
+    await fetch(this._q("/api/sync/start"),{method:"POST"}); this._load();
+  };
   toggle(k){ return (e)=>{ if(e) e.stopPropagation(); this.setState(s=>({ [k]: !s[k] })); }; }
   renderVals(){
-    const s = this.state;
-    const rot = b => b ? '90deg' : '0deg';
+    const st = this.state.status, rot = b => b ? '90deg' : '0deg';
+    const dep = (key,name)=>{ const d=(st&&st[key])||{ok:false,detail:"检测中…"}; const inst=!!this.state.installing[key];
+      return { name, detail:d.detail||"", ok:!!d.ok, iconBg:d.ok?"var(--green-bg)":"var(--red-bg)", iconColor:d.ok?"var(--green)":"var(--red)", iconChar:d.ok?"✓":"!",
+        showInstall: !d.ok && !!d.canInstall, installing:inst, installLabel: inst?"安装中…":"安装",
+        showHint: !d.ok && !!d.fixHint, fixHint:d.fixHint||"", install:()=>this._install(key) }; };
+    const deps = [ dep("node","Node.js"), dep("chromium","Chromium"), dep("ffmpeg","ffmpeg"), dep("whisper","whisper") ];
+    const tokens=(st&&st.tokens)||{ok:false,count:0}, notion=(st&&st.notion)||{ok:false,detail:""};
+    const folders=(st&&st.folders)||[], sched=(st&&st.schedule)||{enabled:false};
+    const ready = deps.filter(d=>d.ok).length + (tokens.ok?1:0) + (notion.ok?1:0);
     return {
-      noop: (e)=>{ if(e) e.stopPropagation(); },
-      recheck: (e)=>{ if(e) e.stopPropagation(); },
-      toggleChromium: this.toggle('chromium'),
-      toggleFfmpeg: this.toggle('ffmpeg'),
-      toggleWhisper: this.toggle('whisper'),
-      toggleDouyin: this.toggle('douyin'),
-      toggleNotion: this.toggle('notion'),
-      toggleSchedule: this.toggle('schedule'),
-      chromiumOpen: s.chromium, ffmpegOpen: s.ffmpeg, whisperOpen: s.whisper,
-      douyinOpen: s.douyin, notionOpen: s.notion, scheduleOpen: s.schedule,
-      chromiumRot: rot(s.chromium), ffmpegRot: rot(s.ffmpeg), whisperRot: rot(s.whisper),
-      douyinRot: rot(s.douyin), notionRot: rot(s.notion), scheduleRot: rot(s.schedule),
+      deps, readyCount: ready, pct: Math.round(ready/6*100)+"%", readyHint: ready>=6 ? "全部就绪" : ("还差 "+(6-ready)+" 项"),
+      recheck: (e)=>{ if(e) e.stopPropagation(); this._load(); },
+      tokenIconBg: tokens.ok?"var(--green-bg)":"var(--amber-bg)", tokenIconColor: tokens.ok?"var(--green)":"var(--amber)", tokenIconChar: tokens.ok?"✓":"!",
+      tokenText: tokens.count ? (tokens.count+" 个有效 token") : "未加 token", addMsg: this.state.addMsg, addToken: this.addToken,
+      notionIconBg: notion.ok?"var(--green-bg)":"var(--amber-bg)", notionIconColor: notion.ok?"var(--green)":"var(--amber)", notionIconChar: notion.ok?"✓":"!",
+      notionText: notion.detail || (notion.ok?"已连通":"未配置"),
+      scheduleText: folders.length+" 个收藏夹 · 定时"+(sched.enabled?"已开启":"未开启"), startSched: this.startSched,
+      notionTokenVal: this.state.nToken, databaseIdVal: this.state.nDb, notionBtnLabel: this.state.nMsg || "保存并测试",
+      onNotionToken: (e)=> this.setState({ nToken:e.target.value }), onDbId: (e)=> this.setState({ nDb:e.target.value }), saveNotion: this.saveNotion,
+      noop:(e)=>{ if(e) e.stopPropagation(); },
+      toggleDouyin:this.toggle('douyin'), toggleNotion:this.toggle('notion'), toggleSchedule:this.toggle('schedule'),
+      douyinOpen:this.state.douyin, notionOpen:this.state.notion, scheduleOpen:this.state.schedule,
+      douyinRot:rot(this.state.douyin), notionRot:rot(this.state.notion), scheduleRot:rot(this.state.schedule),
     };
   }
 }

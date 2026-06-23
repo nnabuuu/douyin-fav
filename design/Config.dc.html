@@ -189,40 +189,85 @@
 <script type="text/x-dc" data-dc-script>
 class Component extends DCLogic {
   state = {
-    enabled: true, scheduled: true, running: false,
-    intervalMin: 60, perRun: 20, asrModel: "turbo",
-    folders: [
-      { id:1, url:"https://www.douyin.com/user/self?showTab=favorite_collection" },
-      { id:2, url:"https://www.douyin.com/collection/7340012398812" },
-    ],
-    notionToken: "secret_abc123def456ghi", databaseId: "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6",
-    errorsOpen: false, dirty: false,
-    last: { at:"今天 14:32", synced:7, skipped:23, failed:2,
-      errors:[
-        { id:"7382…0564", reason:"无字幕轨且下载超时,已跳过" },
-        { id:"7381…7720", reason:"视频已被作者设为私有" },
-      ] },
+    enabled: false, scheduled: false, running: false,
+    intervalMin: 60, perRun: 10, asrModel: "turbo",
+    folders: [],
+    notionToken: "", databaseId: "",
+    errorsOpen: false, dirty: false, notionMsg: "",
+    last: { at:"还没跑过", synced:0, skipped:0, failed:0, errors:[] },
   };
 
+  _q(p){ const t = new URLSearchParams(location.search).get("token"); return t ? p + (p.indexOf("?")>=0?"&":"?") + "token=" + t : p; }
+  componentDidMount(){ this._load(); }
   componentWillUnmount(){ if(this._t) clearTimeout(this._t); }
   markDirty(patch){ this.setState({ ...patch, dirty:true }); }
 
-  toggleSync = ()=>{
-    this.setState(s=>({ enabled: !s.enabled, scheduled: !s.enabled }));
+  async _load(){
+    try {
+      const cfg = await (await fetch(this._q("/api/config"))).json();
+      const st = await (await fetch(this._q("/api/sync/status"))).json();
+      this.setState({
+        folders: (cfg.folders||[]).map((url,i)=>({ id:i+1, url })),
+        notionToken: (cfg.notion&&cfg.notion.token) || "", databaseId: (cfg.notion&&cfg.notion.databaseId) || "",
+        intervalMin: (cfg.schedule&&cfg.schedule.intervalMin) ?? 60, perRun: (cfg.schedule&&cfg.schedule.perRun) ?? 10,
+        enabled: !!(cfg.schedule&&cfg.schedule.enabled), asrModel: (cfg.asr&&cfg.asr.model) || "turbo",
+        scheduled: !!st.scheduled, running: !!st.running, last: this._mapLast(st.last), dirty:false,
+      });
+    } catch(e){}
+  }
+  _mapLast(last){
+    if(!last) return { at:"还没跑过", synced:0, skipped:0, failed:0, errors:[] };
+    return { at:this._when(last.at), synced:last.synced, skipped:last.skipped, failed:last.failed, errors:last.errors||[] };
+  }
+  _when(iso){
+    if(!iso) return "";
+    const d = (Date.now() - new Date(iso).getTime())/1000;
+    if(d < 60) return "刚刚";
+    if(d < 3600) return Math.floor(d/60)+" 分钟前";
+    if(d < 86400) return Math.floor(d/3600)+" 小时前";
+    return Math.floor(d/86400)+" 天前";
+  }
+  _saveConfig(extra){
+    const s = this.state;
+    const body = {
+      folders: s.folders.map(f=>f.url).filter(u=>u && u.trim()),
+      notion: { token: s.notionToken, databaseId: s.databaseId },
+      schedule: { enabled: s.enabled, intervalMin: Number(s.intervalMin)||60, perRun: Number(s.perRun)||10 },
+      asr: { model: s.asrModel },
+      ...(extra||{}),
+    };
+    return fetch(this._q("/api/config"), { method:"PUT", headers:{"content-type":"application/json"}, body: JSON.stringify(body) });
+  }
+  async _refreshStatus(){
+    try { const st = await (await fetch(this._q("/api/sync/status"))).json();
+      this.setState({ scheduled:!!st.scheduled, running:!!st.running, last:this._mapLast(st.last) }); } catch(e){}
+  }
+  _pollStatus = async ()=>{
+    let st = null;
+    try { st = await (await fetch(this._q("/api/sync/status"))).json(); } catch(e){}
+    if(st){ this.setState({ running:!!st.running, scheduled:!!st.scheduled, last:this._mapLast(st.last) }); if(!st.running) return; }
+    this._t = setTimeout(this._pollStatus, 2000);
   };
-  runNow = ()=>{
+
+  toggleSync = async ()=>{
+    const next = !this.state.enabled;
+    this.setState({ enabled: next, scheduled: next });
+    await this._saveConfig({ schedule: { enabled: next, intervalMin: Number(this.state.intervalMin)||60, perRun: Number(this.state.perRun)||10 } });
+    await fetch(this._q(next ? "/api/sync/start" : "/api/sync/stop"), { method:"POST" });
+    this._refreshStatus();
+  };
+  runNow = async ()=>{
     if(this.state.running) return;
     this.setState({ running:true });
-    this._t = setTimeout(()=>{
-      this.setState({ running:false, last:{ at:"刚刚", synced:3, skipped:25, failed:0, errors:[] } });
-    }, 3200);
+    try { await fetch(this._q("/api/sync/run"), { method:"POST" }); } catch(e){}
+    this._pollStatus();
   };
 
   renderVals(){
     const s = this.state, on = s.enabled, running = s.running;
     const last = s.last;
     return {
-      dirty: s.dirty, save: ()=> this.setState({ dirty:false }),
+      dirty: s.dirty, save: ()=>{ this._saveConfig().then(()=> this.setState({ dirty:false })); },
       // sync panel
       syncSubtitle: on ? "服务在后台按节奏自动跑,不依赖网页开着。" : "已暂停,服务不会自动同步。",
       toggleSync: this.toggleSync,
@@ -256,7 +301,15 @@ class Component extends DCLogic {
       notionToken: s.notionToken, databaseId: s.databaseId,
       onNotionToken: (e)=> this.markDirty({ notionToken:e.target.value }),
       onDbId: (e)=> this.markDirty({ databaseId:e.target.value }),
-      notionBtnLabel: "保存并测试", saveNotion: ()=> this.setState({ dirty:false }),
+      notionBtnLabel: s.notionMsg || "保存并测试",
+      saveNotion: async ()=>{
+        this.setState({ notionMsg:"测试中…" });
+        await this._saveConfig({ notion:{ token:s.notionToken, databaseId:s.databaseId } });
+        try {
+          const r = await (await fetch(this._q("/api/notion/test"), { method:"POST" })).json();
+          this.setState({ dirty:false, notionMsg: r.ok ? "已连接 ✓" : ("失败:" + (r.detail||"").slice(0,40)) });
+        } catch(e){ this.setState({ notionMsg:"测试失败" }); }
+      },
       // schedule + asr
       intervalMin: s.intervalMin, perRun: s.perRun, asrModel: s.asrModel,
       onInterval: (e)=> this.markDirty({ intervalMin: e.target.value }),

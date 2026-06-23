@@ -187,34 +187,59 @@ class Component extends DCLogic {
   componentWillUnmount(){ this._stop(); }
   _stop(){ if(this._t) clearTimeout(this._t); this._t=null; }
 
-  submit = () => {
+  _q(p){ const t = new URLSearchParams(location.search).get("token"); return t ? p + (p.indexOf("?")>=0?"&":"?") + "token=" + t : p; }
+
+  submit = async () => {
     const url = (this.state.url||"").trim();
-    if(!url){ return; }
+    if(!url) return;
     this._stop();
-    // trigger an error case for an obviously-bad input to show the error path
-    if(/^bili|bilibili/i.test(url)){
-      this.setState({ phase:"error", errorKind:"unsupported" });
-      return;
-    }
-    if(/notoken|无token/i.test(url)){
-      this.setState({ phase:"error", errorKind:"notoken" });
-      return;
-    }
-    this.setState({ phase:"queued", activeTitle:"排队中 — 第 1 位", activeLog:"已提交,等待处理…" });
-    this._t = setTimeout(()=>{
-      this.setState({ phase:"running", activeTitle:"处理中…", activeLog:"打开抖音页面,解析视频信息…" });
-      this._t = setTimeout(()=>{
-        this.setState({ activeLog:"无字幕轨,下载视频 + 本地 whisper 转写…" });
-        this._t = setTimeout(()=>{
-          const r = this.SAMPLE;
-          this.setState(s=>({
-            phase:"done", result:r, copyLabel:"复制逐字稿", notion:"idle",
-            history:[{ title:r.title, status:"已完成", _done:true }, ...s.history].slice(0,5),
-          }));
-        }, 2600);
-      }, 1800);
-    }, 1400);
+    this.setState({ phase:"queued", activeTitle:"排队中…", activeLog:"已提交,等待处理…", result:null, errorKind:null, notion:"idle" });
+    try {
+      const res = await fetch(this._q("/api/jobs"), { method:"POST", headers:{"content-type":"application/json"}, body: JSON.stringify({ url }) });
+      const j = await res.json();
+      if(!res.ok || !j.id){ this.setState({ phase:"error", errorKind:"generic" }); return; }
+      this._jobId = j.id;
+      this._poll(j.id);
+    } catch(e){ this.setState({ phase:"error", errorKind:"generic" }); }
   };
+
+  _poll = async (id) => {
+    let j;
+    try { j = await (await fetch(this._q("/api/jobs/"+id))).json(); }
+    catch(e){ this._t = setTimeout(()=>this._poll(id), 2000); return; }
+    const last = (j.log && j.log.length) ? j.log[j.log.length-1] : "";
+    if(j.status === "queued"){
+      this.setState({ phase:"queued", activeTitle: j.position ? ("排队中 — 第 "+j.position+" 位") : "排队中…", activeLog: last || "等待处理…" });
+    } else if(j.status === "running"){
+      this.setState({ phase:"running", activeTitle:"处理中…", activeLog: last || "处理中…" });
+    } else if(j.status === "done" && j.result){
+      const r = j.result;
+      this.setState(s=>({ phase:"done", result:r, copyLabel:"复制逐字稿", notion:"idle",
+        history:[{ title:r.title || r.videoId, status:"已完成", _done:true }, ...s.history].slice(0,5) }));
+      return;
+    } else if(j.status === "error"){
+      this.setState({ phase:"error", errorKind: j.errorKind || "generic" });
+      return;
+    }
+    this._t = setTimeout(()=>this._poll(id), 1500);
+  };
+
+  _syncNotion = async () => {
+    if(this.state.notion === "syncing" || this.state.notion === "done" || !this._jobId) return;
+    this.setState({ notion:"syncing" });
+    try {
+      const j = await (await fetch(this._q("/api/jobs/"+this._jobId+"/export-notion"), { method:"POST" })).json();
+      this.setState({ notion: (j.outcome === "created" || j.outcome === "skipped") ? "done" : "error" });
+    } catch(e){ this.setState({ notion:"error" }); }
+  };
+
+  _download(){
+    const r = this.state.result; if(!r) return;
+    const md = "# " + (r.title || r.videoId) + "\n\n## 文案\n\n" + (r.desc||"") + "\n\n## 口播逐字稿\n\n" + (r.transcript||"");
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([md], { type:"text/markdown" }));
+    a.download = (r.videoId || "transcript") + ".md"; a.click(); URL.revokeObjectURL(a.href);
+  }
 
   copy(text, label){
     try{ navigator.clipboard && navigator.clipboard.writeText(text); }catch(e){}
@@ -228,6 +253,7 @@ class Component extends DCLogic {
       notoken: { title:"没有可用 token", hint:"抓取需要抖音登录态,当前池子里没有有效 token。去 Token 管理扫码登录一个再回来重试。", needsToken:true },
       captcha: { title:"遇到验证码", hint:"请到宿主机弹出的 Chrome 窗口里手动过一下验证码,再点重试。", needsToken:false },
       unsupported: { title:"暂不支持的链接", hint:"目前只支持抖音(douyin.com / v.douyin.com / 纯数字 id),bilibili 还在路上。", needsToken:false },
+      auth: { title:"登录态失效", hint:"这个 token 可能掉登录了,去 Token 管理重新验证或换一个再重试。", needsToken:true },
     };
     const err = errMap[s.errorKind] || { title:"提取失败", hint:"视频可能私有或不存在,换个链接或稍后重试。", needsToken:false };
     const isAsr = r && r.source === "asr";
@@ -250,19 +276,15 @@ class Component extends DCLogic {
       copyLabel: s.copyLabel,
       copyTranscript: ()=> this.copy(r && r.transcript, "已复制 ✓"),
       copyAll: ()=> this.copy(r && (r.title+"\n\n"+r.desc+"\n\n"+r.transcript), "已复制 ✓"),
-      download: ()=> this.copy(r && r.transcript, "已下载 ✓"),
+      download: ()=> this._download(),
       notionSyncing: s.notion === "syncing",
-      notionBusy: s.notion !== "idle",
-      notionLabel: s.notion === "done" ? "已存入 Notion ✓" : (s.notion === "syncing" ? "写入中…" : "同步到 Notion"),
-      notionColor: s.notion === "done" ? "var(--green)" : "var(--accent-dark)",
-      notionBg: s.notion === "done" ? "var(--green-bg)" : "var(--accent-light)",
-      notionBorder: s.notion === "done" ? "var(--green-bg)" : "var(--accent-light)",
-      notionCursor: s.notion === "idle" ? "pointer" : "default",
-      syncNotion: ()=>{
-        if(this.state.notion !== "idle") return;
-        this.setState({ notion:"syncing" });
-        setTimeout(()=> this.setState({ notion:"done" }), 1500);
-      },
+      notionBusy: s.notion === "syncing",
+      notionLabel: s.notion === "done" ? "已存入 Notion ✓" : (s.notion === "syncing" ? "写入中…" : (s.notion === "error" ? "写入失败,重试" : "同步到 Notion")),
+      notionColor: s.notion === "done" ? "var(--green)" : (s.notion === "error" ? "var(--red)" : "var(--accent-dark)"),
+      notionBg: s.notion === "done" ? "var(--green-bg)" : (s.notion === "error" ? "var(--red-bg)" : "var(--accent-light)"),
+      notionBorder: s.notion === "done" ? "var(--green-bg)" : (s.notion === "error" ? "var(--red-bg)" : "var(--accent-light)"),
+      notionCursor: (s.notion === "idle" || s.notion === "error") ? "pointer" : "default",
+      syncNotion: this._syncNotion,
       hasHistory: s.history.length > 0,
       history: s.history.map(h=>({ title:h.title, status:h.status, dot: h._done ? "var(--green)" : "var(--accent)", open: ()=>{} })),
     };
