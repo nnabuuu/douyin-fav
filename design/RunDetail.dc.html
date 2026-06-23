@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="/vendor/fonts.css">
+<style>
+  :root{
+    --surface:#fafbfc; --surface-elevated:#ffffff; --surface-subtle:#f0f2f4;
+    --ink:#1a2332; --ink-secondary:#536471; --ink-muted:#8899a6;
+    --border:#e1e4e8; --border-subtle:#eef0f2;
+    --accent:#4a7c6f; --accent-light:#e8f0ed; --accent-dark:#3a6359;
+    --navy:#1a2332; --green:#4a7a52; --green-bg:#eaf2ea;
+    --amber:#8a7040; --amber-bg:#f3efe6; --red:#9a5a55; --red-bg:#f5ece9;
+    --font-sans:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    --font-serif:'Noto Serif',Georgia,serif;
+    --font-mono:'JetBrains Mono','Consolas',monospace;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:var(--font-sans);background:var(--surface);color:var(--ink);-webkit-font-smoothing:antialiased;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  ::-webkit-scrollbar{width:9px;height:9px;}
+  ::-webkit-scrollbar-thumb{background:#d4d9de;border-radius:100px;}
+</style>
+</helmet>
+
+<div style="min-height:100vh;display:flex;">
+
+  <aside style="flex:none;width:248px;background:var(--surface-elevated);border-right:1px solid var(--border-subtle);min-height:100vh;display:flex;flex-direction:column;padding:22px 16px;position:sticky;top:0;height:100vh;">
+    <div style="display:flex;align-items:center;gap:10px;padding:6px 8px 22px;">
+      <img src="assets/logo-small.svg" width="26" height="26" alt="" style="border-radius:6px;display:block;" />
+      <span style="font-family:var(--font-serif);font-size:15px;letter-spacing:.15em;color:var(--ink);">即见</span>
+    </div>
+    <a href="Transcribe.dc.html" style="display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:10px;text-decoration:none;color:var(--ink-secondary);font-size:13.5px;font-weight:500;margin-bottom:3px;" style-hover="background:rgba(0,0,0,.04);">提取字幕</a>
+    <a href="Config.dc.html" style="display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:10px;text-decoration:none;background:var(--accent-light);color:var(--accent-dark);font-size:13.5px;font-weight:600;margin-bottom:3px;">自动同步</a>
+    <a href="Tokens.dc.html" style="display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:10px;text-decoration:none;color:var(--ink-secondary);font-size:13.5px;font-weight:500;margin-bottom:3px;" style-hover="background:rgba(0,0,0,.04);">Token 管理</a>
+    <a href="Setup Wizard.dc.html" style="display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:10px;text-decoration:none;color:var(--ink-secondary);font-size:13.5px;font-weight:500;" style-hover="background:rgba(0,0,0,.04);">安装向导</a>
+    <div style="margin-top:auto;display:flex;align-items:center;gap:7px;font-size:11px;color:var(--ink-muted);padding:8px 10px;">
+      <span style="width:6px;height:6px;border-radius:50%;background:var(--green);"></span>本地运行
+    </div>
+  </aside>
+
+  <main style="flex:1;min-width:0;padding:48px 40px 96px;">
+    <div style="max-width:760px;margin:0 auto;">
+
+      <div onClick="{{ back }}" style="font-size:13px;color:var(--accent);cursor:pointer;margin-bottom:18px;display:inline-block;">← 返回自动同步</div>
+
+      <sc-if value="{{ loading }}" hint-placeholder-val="{{ false }}">
+        <div style="color:var(--ink-muted);font-size:14px;">加载中…</div>
+      </sc-if>
+
+      <sc-if value="{{ notFound }}" hint-placeholder-val="{{ false }}">
+        <div style="background:var(--surface-elevated);border:1px solid var(--border-subtle);border-radius:14px;padding:28px;text-align:center;color:var(--ink-secondary);">找不到这一轮记录(可能已被滚动清理)。</div>
+      </sc-if>
+
+      <sc-if value="{{ found }}" hint-placeholder-val="{{ true }}">
+        <div style="font-size:11px;letter-spacing:.08em;color:var(--accent);font-weight:600;margin-bottom:10px;">SYNC RUN</div>
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px;">
+          <h1 style="font-size:24px;font-weight:700;letter-spacing:-.02em;margin:0;">单轮同步详情</h1>
+          <span style="font-size:13px;font-weight:600;padding:3px 10px;border-radius:6px;background:var(--surface-subtle);color:{{ statusColor }};">{{ statusLabel }}</span>
+          <span style="font-size:13px;color:var(--ink-muted);">{{ at }}</span>
+        </div>
+
+        <div style="display:flex;gap:10px;margin-bottom:22px;">
+          <div style="flex:1;background:var(--green-bg);border-radius:10px;padding:13px 16px;"><div style="font-size:22px;font-weight:700;color:var(--green);">{{ synced }}</div><div style="font-size:12px;color:var(--ink-secondary);margin-top:2px;">新增</div></div>
+          <div style="flex:1;background:var(--surface-subtle);border-radius:10px;padding:13px 16px;"><div style="font-size:22px;font-weight:700;color:var(--ink-secondary);">{{ skipped }}</div><div style="font-size:12px;color:var(--ink-secondary);margin-top:2px;">跳过</div></div>
+          <div style="flex:1;background:var(--red-bg);border-radius:10px;padding:13px 16px;"><div style="font-size:22px;font-weight:700;color:var(--red);">{{ failed }}</div><div style="font-size:12px;color:var(--ink-secondary);margin-top:2px;">失败</div></div>
+        </div>
+
+        <div style="font-size:11px;letter-spacing:.08em;color:var(--ink-muted);font-weight:600;margin-bottom:10px;">本轮视频 · 共 {{ total }} 条 · 上限 {{ cap }}</div>
+        <div style="border:1px solid var(--border-subtle);border-radius:12px;overflow:hidden;">
+          <sc-for list="{{ items }}" as="it" hint-placeholder-count="4">
+            <div onClick="{{ it.open }}" style="padding:12px 16px;border-bottom:1px solid var(--border-subtle);cursor:pointer;" style-hover="background:var(--surface-subtle);">
+              <div style="display:flex;align-items:center;gap:11px;">
+                <span style="flex:none;font-family:var(--font-mono);font-size:12px;color:var(--ink-muted);">{{ it.videoId }}</span>
+                <span style="flex:1;min-width:0;font-size:13px;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ it.title }}</span>
+                <span style="flex:none;font-size:12px;font-weight:600;color:{{ it.statusColor }};">{{ it.statusLabel }}</span>
+                <span style="flex:none;font-size:11px;color:var(--accent);">查看 →</span>
+              </div>
+              <sc-if value="{{ it.hasReason }}" hint-placeholder-val="{{ false }}">
+                <div style="margin-top:4px;font-size:11.5px;color:var(--ink-muted);font-family:var(--font-mono);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ it.reason }}</div>
+              </sc-if>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { run: null, loading: true };
+  _q(p){ const t = new URLSearchParams(location.search).get("token"); return t ? p + (p.indexOf("?")>=0?"&":"?") + "token=" + t : p; }
+  _nav(p){ window.location.href = this._q(p); }
+  componentDidMount(){ this._load(); }
+  async _load(){
+    const id = new URLSearchParams(location.search).get("id");
+    if(!id){ this.setState({ loading:false }); return; }
+    try {
+      const run = await (await fetch(this._q("/api/sync/runs/"+id))).json();
+      this.setState({ run: (run && !run.error) ? run : null, loading:false });
+    } catch(e){ this.setState({ loading:false }); }
+  }
+  _when(iso){
+    if(!iso) return "";
+    const d = (Date.now() - new Date(iso).getTime())/1000;
+    if(d < 60) return "刚刚";
+    if(d < 3600) return Math.floor(d/60)+" 分钟前";
+    if(d < 86400) return Math.floor(d/3600)+" 小时前";
+    return Math.floor(d/86400)+" 天前";
+  }
+  renderVals(){
+    const run = this.state.run;
+    const back = ()=> this._nav('/config');
+    if(!run) return { loading: this.state.loading, notFound: !this.state.loading, found:false, items:[], back };
+    return {
+      loading:false, notFound:false, found:true, back,
+      statusLabel: ({running:"进行中",stopped:"已停止",error:"出错",done:"完成"})[run.status]||run.status,
+      statusColor: run.status==="error"?"var(--red)":(run.status==="stopped"?"var(--amber)":"var(--green)"),
+      at: this._when(run.finishedAt||run.startedAt),
+      synced:run.synced, skipped:run.skipped, failed:run.failed, cap:run.cap, total:(run.items||[]).length,
+      items: (run.items||[]).map(it=>({
+        videoId: it.videoId, title: it.title||it.videoId,
+        statusLabel: ({transcribing:"转写中",exported:"已写入",skipped:"跳过",failed:"失败"})[it.status]||it.status,
+        statusColor: it.status==="failed"?"var(--red)":(it.status==="exported"?"var(--green)":"var(--ink-muted)"),
+        reason: it.reason||it.step||"", hasReason: !!(it.reason||it.step),
+        open: ()=> this._nav('/?v='+it.videoId),
+      })),
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -184,6 +184,10 @@ class Component extends DCLogic {
   };
 
   componentWillUnmount(){ this._stop(); }
+  componentDidMount(){
+    const v = new URLSearchParams(location.search).get("v"); // deep-link: /?v=<videoId> auto-loads it
+    if(v){ this.setState({ url: v }); setTimeout(()=> this.submit(), 80); }
+  }
   _stop(){ if(this._t) clearTimeout(this._t); this._t=null; }
 
   _q(p){ const t = new URLSearchParams(location.search).get("token"); return t ? p + (p.indexOf("?")>=0?"&":"?") + "token=" + t : p; }

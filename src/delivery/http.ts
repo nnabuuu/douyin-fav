@@ -42,6 +42,7 @@ const PAGE_FILES: Record<string, string> = {
   "/config": "Config.dc.html",
   "/setup": "Setup Wizard.dc.html",
   "/tokens": "Tokens.dc.html",
+  "/run": "RunDetail.dc.html",
 };
 const CONTENT_TYPE: Record<string, string> = {
   ".html": "text/html", ".js": "application/javascript", ".svg": "image/svg+xml",
