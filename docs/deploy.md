@@ -22,6 +22,8 @@ npm run setup          # 装 Chromium + 写默认配置 + 打印后续步骤
 npm run serve          # http://localhost:8787 , 配置页 /config
 ```
 > 让它常驻。要后台长跑用 `pm2`/`launchd`/`systemd`;macOS 防睡眠可 `caffeinate -dimsu npm run serve`。
+>
+> 端口/绑定/门禁都用环境变量改:`PORT=9000`(默认 8787)、`HOST=127.0.0.1`(默认 `0.0.0.0` 同网段可达;设 `127.0.0.1` 只本机)、`TOKEN=随便一串`(设了 `/api/*` 都要带 `?token=…`)。例:`PORT=9000 TOKEN=abc npm run serve`。
 
 ## 2. 加抖音 token(扫码登录)
 
