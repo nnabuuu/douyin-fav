@@ -174,10 +174,11 @@
       <!-- 2. FOLDERS -->
       <div style="background:var(--surface-elevated);border:1px solid var(--border-subtle);border-radius:14px;padding:22px;margin-bottom:18px;">
         <div style="font-size:15px;font-weight:600;margin-bottom:4px;">监控的收藏夹</div>
-        <p style="margin:0 0 16px;font-size:12.5px;color:var(--ink-secondary);line-height:1.6;">可加多个抖音收藏夹链接,改完下一轮生效。</p>
+        <p style="margin:0 0 16px;font-size:12.5px;color:var(--ink-secondary);line-height:1.6;">URL = 收藏夹页面;<b style="color:var(--ink);">收藏夹名填了就只同步那个夹子</b>,留空 = 整个收藏。改完下一轮生效。</p>
         <sc-for list="{{ folders }}" as="f" hint-placeholder-count="2">
           <div style="display:flex;gap:9px;margin-bottom:10px;">
-            <input value="{{ f.url }}" onInput="{{ f.onInput }}" placeholder="https://www.douyin.com/user/...collection..." style="flex:1;min-width:0;font-family:var(--font-mono);font-size:12.5px;padding:11px 13px;border:1px solid {{ f.borderColor }};border-radius:9px;background:var(--surface);color:var(--ink);outline:none;" style-focus="border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-light);" />
+            <input value="{{ f.url }}" onInput="{{ f.onUrl }}" placeholder="https://www.douyin.com/user/self?showTab=favorite_collection" style="flex:2;min-width:0;font-family:var(--font-mono);font-size:12.5px;padding:11px 13px;border:1px solid {{ f.borderColor }};border-radius:9px;background:var(--surface);color:var(--ink);outline:none;" style-focus="border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-light);" />
+            <input value="{{ f.folderName }}" onInput="{{ f.onName }}" placeholder="收藏夹名(选填)" style="flex:1;min-width:0;font-family:var(--font-sans);font-size:12.5px;padding:11px 13px;border:1px solid var(--border);border-radius:9px;background:var(--surface);color:var(--ink);outline:none;" style-focus="border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-light);" />
             <button onClick="{{ f.remove }}" style="flex:none;width:42px;font-family:var(--font-sans);font-size:16px;color:var(--ink-muted);background:var(--surface);border:1px solid var(--border);border-radius:9px;cursor:pointer;" style-hover="color:var(--red);border-color:#e6cfc9;">×</button>
           </div>
         </sc-for>
@@ -374,12 +375,18 @@ class Component extends DCLogic {
         })),
       })),
       // folders
-      folders: s.folders.map(f=>({
-        url: f.url,
-        borderColor: (f.url && f.url.indexOf("douyin.com")<0) ? "#e6cfc9" : "var(--border)",
-        onInput: (e)=> this.markDirty({ folders: s.folders.map(x=> x.id===f.id ? {...x, url:e.target.value} : x) }),
-        remove: ()=> this.markDirty({ folders: s.folders.filter(x=>x.id!==f.id) }),
-      })),
+      folders: s.folders.map(f=>{
+        const raw = f.url || "", hi = raw.indexOf("#");
+        const base = hi>=0 ? raw.slice(0,hi) : raw, name = hi>=0 ? raw.slice(hi+1) : "";
+        const join = (b,n)=>{ const u=b.split("#")[0]; return n.trim() ? (u+"#"+n.trim()) : u; };
+        return {
+          url: base, folderName: name,
+          borderColor: (base && base.indexOf("douyin.com")<0) ? "#e6cfc9" : "var(--border)",
+          onUrl: (e)=> this.markDirty({ folders: s.folders.map(x=> x.id===f.id ? {...x, url: join(e.target.value, name)} : x) }),
+          onName: (e)=> this.markDirty({ folders: s.folders.map(x=> x.id===f.id ? {...x, url: join(base, e.target.value)} : x) }),
+          remove: ()=> this.markDirty({ folders: s.folders.filter(x=>x.id!==f.id) }),
+        };
+      }),
       addFolder: ()=> this.markDirty({ folders:[...s.folders, { id:Date.now(), url:"" }] }),
       // notion
       notionToken: s.notionToken, databaseId: s.databaseId,
