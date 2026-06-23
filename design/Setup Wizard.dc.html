@@ -157,7 +157,15 @@
         <span style="flex:none;width:18px;text-align:center;color:var(--ink-muted);font-size:11px;transition:transform .18s ease;transform:rotate({{ scheduleRot }});">▸</span>
       </div>
       <sc-if value="{{ scheduleOpen }}" hint-placeholder-val="{{ false }}">
-        <div style="padding:0 22px 18px 53px;font-size:12.5px;color:var(--ink-secondary);line-height:1.7;">已选「干货·学习」「做饭收藏」,每 60 分钟一轮、每轮最多 20 条。开启后服务自动跑,收藏夹与节奏细调请去 <code style="font-family:var(--font-mono);background:var(--surface-subtle);padding:1px 5px;border-radius:4px;color:var(--accent-dark);">/config</code>。</div>
+        <div style="padding:0 22px 18px 53px;">
+          <p style="margin:0 0 10px;font-size:12.5px;color:var(--ink-secondary);line-height:1.7;"><b style="color:var(--ink);">填收藏夹名 = 只同步那个夹子</b>,留空 = 整个收藏。</p>
+          <div style="display:flex;gap:9px;margin-bottom:9px;">
+            <input value="{{ folderUrlVal }}" onInput="{{ onFolderUrl }}" placeholder="https://www.douyin.com/user/self?showTab=favorite_collection" style="flex:2;min-width:0;font-family:var(--font-mono);font-size:12px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--ink);outline:none;" />
+            <input value="{{ folderNameVal }}" onInput="{{ onFolderName }}" placeholder="收藏夹名(选填)" style="flex:1;min-width:0;font-family:var(--font-sans);font-size:12px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--ink);outline:none;" />
+            <button onClick="{{ saveFolder }}" style="flex:none;font-family:var(--font-sans);font-size:13px;color:#fff;background:var(--navy);border:none;border-radius:8px;padding:9px 16px;cursor:pointer;font-weight:500;">{{ folderBtnLabel }}</button>
+          </div>
+          <p style="margin:0;font-size:11.5px;color:var(--ink-muted);line-height:1.6;">{{ folderMore }}多个收藏夹 / 节奏细调去 <code style="font-family:var(--font-mono);background:var(--surface-subtle);padding:1px 5px;border-radius:4px;color:var(--accent-dark);">/config</code>。</p>
+        </div>
       </sc-if>
     </div>
 
@@ -178,7 +186,7 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script>
 class Component extends DCLogic {
-  state = { status:null, installing:{}, douyin:false, notion:false, schedule:false, addMsg:"", nToken:"", nDb:"", nMsg:"" };
+  state = { status:null, installing:{}, douyin:false, notion:false, schedule:false, addMsg:"", nToken:"", nDb:"", nMsg:"", folders:[], fMsg:"" };
   _q(p){ const t = new URLSearchParams(location.search).get("token"); return t ? p + (p.indexOf("?")>=0?"&":"?") + "token=" + t : p; }
   componentDidMount(){ this._load(); }
   componentWillUnmount(){ if(this._t) clearTimeout(this._t); }
@@ -186,7 +194,7 @@ class Component extends DCLogic {
     try {
       const status = await (await fetch(this._q("/api/setup/status"))).json();
       const cfg = await (await fetch(this._q("/api/config"))).json();
-      this.setState({ status, nToken: (cfg.notion&&cfg.notion.token)||"", nDb: (cfg.notion&&cfg.notion.databaseId)||"" });
+      this.setState({ status, nToken: (cfg.notion&&cfg.notion.token)||"", nDb: (cfg.notion&&cfg.notion.databaseId)||"", folders: Array.isArray(cfg.folders)?cfg.folders:[] });
     } catch(e){}
   }
   saveNotion = async ()=>{
@@ -216,6 +224,12 @@ class Component extends DCLogic {
     await fetch(this._q("/api/config"),{method:"PUT",headers:{"content-type":"application/json"},body:JSON.stringify({schedule:{enabled:true}})});
     await fetch(this._q("/api/sync/start"),{method:"POST"}); this._load();
   };
+  saveFolder = async ()=>{
+    this.setState({ fMsg:"保存中…" });
+    const folders = (this.state.folders||[]).filter(x=>x&&x.trim());
+    try { await fetch(this._q("/api/config"),{method:"PUT",headers:{"content-type":"application/json"},body:JSON.stringify({folders})}); this.setState({ fMsg:"已保存 ✓" }); this._load(); }
+    catch(e){ this.setState({ fMsg:"保存失败" }); }
+  };
   toggle(k){ return (e)=>{ if(e) e.stopPropagation(); this.setState(s=>({ [k]: !s[k] })); }; }
   renderVals(){
     const st = this.state.status, rot = b => b ? '90deg' : '0deg';
@@ -226,6 +240,12 @@ class Component extends DCLogic {
     const deps = [ dep("node","Node.js"), dep("chromium","Chromium"), dep("ffmpeg","ffmpeg"), dep("whisper","whisper") ];
     const tokens=(st&&st.tokens)||{ok:false,count:0}, notion=(st&&st.notion)||{ok:false,detail:""};
     const folders=(st&&st.folders)||[], sched=(st&&st.schedule)||{enabled:false};
+    // editable first folder (URL + 收藏夹名 split on '#'), saved back as `url#name`
+    const rawFolders = Array.isArray(this.state.folders)?this.state.folders:[];
+    const f0 = rawFolders[0] || "", hi = f0.indexOf("#");
+    const fBase = hi>=0?f0.slice(0,hi):f0, fName = hi>=0?f0.slice(hi+1):"";
+    const joinF = (b,n)=>{ const u=b.split("#")[0]; return n.trim()?(u+"#"+n.trim()):u; };
+    const setF0 = v=>{ const arr=rawFolders.length?[...rawFolders]:[""]; arr[0]=v; this.setState({ folders:arr, fMsg:"" }); };
     const ready = deps.filter(d=>d.ok).length + (tokens.ok?1:0) + (notion.ok?1:0);
     return {
       deps, readyCount: ready, pct: Math.round(ready/6*100)+"%", readyHint: ready>=6 ? "全部就绪" : ("还差 "+(6-ready)+" 项"),
@@ -235,6 +255,11 @@ class Component extends DCLogic {
       notionIconBg: notion.ok?"var(--green-bg)":"var(--amber-bg)", notionIconColor: notion.ok?"var(--green)":"var(--amber)", notionIconChar: notion.ok?"✓":"!",
       notionText: notion.detail || (notion.ok?"已连通":"未配置"),
       scheduleText: folders.length+" 个收藏夹 · 定时"+(sched.enabled?"已开启":"未开启"), startSched: this.startSched,
+      folderUrlVal: fBase, folderNameVal: fName,
+      onFolderUrl: (e)=> setF0(joinF(e.target.value, fName)),
+      onFolderName: (e)=> setF0(joinF(fBase, e.target.value)),
+      saveFolder: this.saveFolder, folderBtnLabel: this.state.fMsg || "保存收藏夹",
+      folderMore: rawFolders.length>1 ? ("已配置 "+rawFolders.length+" 个收藏夹,这里编辑第 1 个;") : "",
       notionTokenVal: this.state.nToken, databaseIdVal: this.state.nDb, notionBtnLabel: this.state.nMsg || "保存并测试",
       onNotionToken: (e)=> this.setState({ nToken:e.target.value }), onDbId: (e)=> this.setState({ nDb:e.target.value }), saveNotion: this.saveNotion,
       noop:(e)=>{ if(e) e.stopPropagation(); },

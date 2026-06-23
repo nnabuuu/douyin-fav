@@ -6,8 +6,10 @@ import type { BrowserSession, ContentProvider, Transcriber } from "../contracts.
 import { retry, pace } from "../net.js";
 
 const DETAIL = "/aweme/v1/web/aweme/detail";
-// 全部收藏(aweme/listcollection)+ 命名收藏夹(collects/video/list)的视频列表接口
-const LISTCOLL = /(aweme\/listcollection|collects?\/video)/;
+// 全部收藏列表接口(进收藏页就会自动打一发)
+const ALL_FAVORITES = /aweme\/listcollection/;
+// 单个命名收藏夹内的视频列表接口(点开某收藏夹才打)
+const FOLDER_VIDEOS = /collects?\/video/;
 const MAX_SCROLLS = 40;
 
 export class DouyinProvider implements ContentProvider {
@@ -142,37 +144,41 @@ export class DouyinProvider implements ContentProvider {
       // 0 items is an anti-bot signal too → one gentle re-scan before concluding.
       return await retry(() => this.scanCollection(session, folderUrl, log), {
         delays: [3000],
-        retryable: (e) => !(e instanceof CaptchaError),
+        retryable: (e) => !(e instanceof CaptchaError || e instanceof AuthError),
         onRetry: () => log("收藏夹 0 条,疑似反爬,再扫一次…"),
       });
     } catch (e) {
-      if (e instanceof CaptchaError) throw e;
+      if (e instanceof CaptchaError || e instanceof AuthError) throw e; // 验证码 / 收藏夹名对不上:原样抛,别重试
       throw new AuthError("收藏夹多次拦到 0 条(登录态失效,或收藏夹 URL 变了)。");
     }
   }
 
   private async scanCollection(session: BrowserSession, folderUrl: string, log: (m: string) => void): Promise<CollectionItem[]> {
     const items = new Map<string, CollectionItem>();
-    const page = await session.newPage();
-    page.on("response", async (r) => {
-      if (!LISTCOLL.test(r.url())) return;
-      try { for (const it of parseList(await r.json())) items.set(it.videoId, it); } catch { /* not json */ }
-    });
-    // a `#收藏夹名` suffix means: open that specific named folder (its URL doesn't change,
-    // so we land on the folder view then click the card by name).
+    // `#收藏夹名` 后缀 = 只同步这个命名收藏夹;裸 URL = 全部收藏。
     let folderName = "", navUrl = folderUrl;
     try { const u = new URL(folderUrl); folderName = decodeURIComponent(u.hash.replace(/^#/, "")).trim(); u.hash = ""; navUrl = u.toString(); } catch { /* not a URL */ }
+    const wantFolder = !!folderName;
+    if (wantFolder) navUrl = withFolderSubtab(navUrl); // 切到「收藏夹」子页,卡片才渲染
+
+    // 关键:点了名收藏夹就只收 collects/video/list;进页面自动打的那发「全部收藏」
+    // listcollection 必须忽略,否则会把整个收藏都同步进来(用户踩的就是这个坑)。
+    const wanted = wantFolder ? FOLDER_VIDEOS : ALL_FAVORITES;
+    const page = await session.newPage();
+    page.on("response", async (r) => {
+      if (!wanted.test(r.url())) return;
+      try { for (const it of parseList(await r.json())) items.set(it.videoId, it); } catch { /* not json */ }
+    });
     try {
       await page.goto(navUrl, { waitUntil: "domcontentloaded" });
       await page.waitForTimeout(1500);
-      if (folderName) {
+      if (wantFolder) {
         log(`打开收藏夹「${folderName}」…`);
-        try {
-          const card = page.getByText(folderName, { exact: false }).first();
-          await card.waitFor({ state: "visible", timeout: 8000 });
-          await card.click();
-          await page.waitForTimeout(2000); // let the folder's video list fire
-        } catch { log(`没找到名为「${folderName}」的收藏夹卡片(名字对不上?),按当前页抓。`); }
+        if (!(await openFolderByName(page, folderName))) {
+          // 名字对不上就明确报错——绝不退化成「抓当前页 = 全部收藏」。
+          throw new AuthError(`没找到名为「${folderName}」的收藏夹(确认名字完全一致,或把收藏夹名留空=同步全部收藏)。`);
+        }
+        await page.waitForTimeout(2000); // 等 collects/video/list 打出来
       }
       let stable = 0;
       for (let i = 0; i < MAX_SCROLLS && stable < 3; i++) {
@@ -188,7 +194,7 @@ export class DouyinProvider implements ContentProvider {
     } finally {
       await page.close().catch(() => {});
     }
-    log(`收藏夹发现 ${items.size} 条`);
+    log(`${wantFolder ? `收藏夹「${folderName}」` : "全部收藏"}发现 ${items.size} 条`);
     return [...items.values()];
   }
 
@@ -227,6 +233,29 @@ export class DouyinProvider implements ContentProvider {
 /** Anti-bot wall? Their `if "验证码" in title` idea — check the page title for verify markers. */
 async function captchaPresent(page: Page): Promise<boolean> {
   try { return /验证|verify|captcha|滑块|slider/i.test(await page.title()); } catch { return false; }
+}
+
+/** Force the 收藏页→收藏夹 子标签,这样命名收藏夹的卡片会渲染出来(而不是默认的「全部收藏」)。 */
+function withFolderSubtab(u: string): string {
+  try {
+    const url = new URL(u);
+    url.searchParams.set("showTab", "favorite_collection");
+    url.searchParams.set("showSubTab", "favorite_folder");
+    return url.toString();
+  } catch { return u; }
+}
+
+/** Click the named-folder card. exact 优先(避免命中标题里含同名字样的视频),不行再退到包含匹配。 */
+async function openFolderByName(page: Page, name: string): Promise<boolean> {
+  for (const exact of [true, false]) {
+    try {
+      const el = page.getByText(name, { exact }).first();
+      await el.waitFor({ state: "visible", timeout: 6000 });
+      await el.click();
+      return true;
+    } catch { /* try the looser match, then give up */ }
+  }
+  return false;
 }
 
 /** Pull aweme items out of a listcollection payload without assuming one fixed shape. */
