@@ -54,7 +54,7 @@ compose.ts       组合根。server.ts / one.ts / preflight.ts / setup.ts 都用
 ## 检查
 
 ```bash
-npm test                 # 纯逻辑:路由/轮换/failover/队列位次/config/扫描解析/同步幂等
+npm test                 # node:test 套件:路由/轮换/failover/队列/config/字幕轨/Notion 导出(mock)/同步上限·取消·记录/FileSyncStore 等
 npx tsc --noEmit         # 类型
 npm run preflight        # 真实:验证 token + 扫一次收藏夹
 ```

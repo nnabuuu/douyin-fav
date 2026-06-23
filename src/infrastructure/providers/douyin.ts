@@ -221,7 +221,7 @@ export function parseList(body: any): CollectionItem[] {
 }
 
 /** REAL spoken-subtitle track only — NOT a.caption (that's the post 文案). */
-function extractSubtitleTrack(detail: any): string | null {
+export function extractSubtitleTrack(detail: any): string | null {
   const a = detail?.aweme_detail ?? detail?.aweme_info ?? detail?.aweme ?? detail;
   const cueArrays = [a?.video?.caption, a?.video?.cla_info?.caption_infos, a?.caption_infos];
   for (const cues of cueArrays) {

@@ -11,7 +11,7 @@
     "serve": "tsx src/server.ts",
     "setup": "tsx src/setup.ts",
     "preflight": "tsx src/preflight.ts",
-    "test": "tsx src/selftest.ts"
+    "test": "tsx --test --test-reporter=spec src/all.test.ts"
   },
   "dependencies": {
     "better-sqlite3": "^11.8.0",
