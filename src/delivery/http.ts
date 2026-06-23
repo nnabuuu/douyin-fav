@@ -45,7 +45,7 @@ const PAGE_FILES: Record<string, string> = {
 };
 const CONTENT_TYPE: Record<string, string> = {
   ".html": "text/html", ".js": "application/javascript", ".svg": "image/svg+xml",
-  ".css": "text/css", ".png": "image/png", ".json": "application/json",
+  ".css": "text/css", ".png": "image/png", ".json": "application/json", ".woff2": "font/woff2",
 };
 /** Serve a design file for nice routes (/, /config…) or by raw name (support.js, *.dc.html, assets/*). */
 function serveDesign(pathname: string, res: http.ServerResponse): boolean {
