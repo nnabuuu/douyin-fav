@@ -1,5 +1,7 @@
 # douyin-fav
 
+![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg) ![Node ≥ 18](https://img.shields.io/badge/node-%E2%89%A5%2018-brightgreen.svg) ![CDN: none](https://img.shields.io/badge/CDN-none·可离线-success.svg) ![tests: node:test](https://img.shields.io/badge/tests-node%3Atest-success.svg)
+
 把抖音收藏夹里的视频转成文字稿(有字幕轨用字幕,没有就本地 whisper 转口播),可单条提取、起本地服务给别人用、或定时自动同步到 Notion。Headful Playwright + 持久会话,不逆向签名——浏览器自己算,我们只拦它发出的 JSON。
 
 ## 三种用法
@@ -40,7 +42,7 @@ compose.ts       组合根。server.ts / one.ts / preflight.ts / setup.ts 都用
 | `POST /api/jobs` · `GET /api/jobs/:id` | 单条字幕任务(带排队位次) |
 | `GET/POST/DELETE /api/tokens…` · `/validate` | token 池:扫码加、验证、轮换+故障转移 |
 | `GET/PUT /api/config` | 收藏夹 / Notion / 调度配置(`/config` 页可视化) |
-| `POST /api/sync/run` · `GET /api/sync/status` · `start`/`stop` | 自动同步:手动触发 / 状态 / 定时开关 |
+| `/api/sync/run`·`cancel`·`start`·`stop` · `GET /api/sync/status` · `/api/sync/runs[/:id]` | 自动同步:触发 / 取消 / 定时,实时状态,历史(逐条视频记录) |
 
 ## 转写来源
 
@@ -65,3 +67,9 @@ npm run preflight        # 真实:验证 token + 扫一次收藏夹
 - 会话过期 → 拦到 0 条会**大声失败**;token 池全失效则安静停同步,`/api/sync/status` 可见。
 - 自动化访问踩抖音 ToS;低频自用风险低但非零。给别人/公网请加 `TOKEN=` 门禁。
 - 旧的批量脚本 `src/{sync,discover}.ts`(SQLite 去重)仍保留,已被服务化流程取代。
+
+## License
+
+[MIT](LICENSE) © 2026 Xiaochen Nie
+
+> ⚠️ 自动化访问抖音踩其 ToS;本工具仅供个人低频自用,风险自负。登录态、Notion token 等都只存本机,不上云。
