@@ -35,8 +35,8 @@ function readJson(req: http.IncomingMessage): Promise<any> {
   });
 }
 
-// ── serve the Claude Design frontend (design/*.dc.html + support.js + assets) ──
-const DESIGN_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..", "design");
+// ── serve the frontend (frontend/*.dc.html + support.js + vendor + assets) ──
+const FRONTEND_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..", "frontend");
 const PAGE_FILES: Record<string, string> = {
   "/": "Transcribe.dc.html",
   "/config": "Config.dc.html",
@@ -48,12 +48,12 @@ const CONTENT_TYPE: Record<string, string> = {
   ".html": "text/html", ".js": "application/javascript", ".svg": "image/svg+xml",
   ".css": "text/css", ".png": "image/png", ".json": "application/json", ".woff2": "font/woff2",
 };
-/** Serve a design file for nice routes (/, /config…) or by raw name (support.js, *.dc.html, assets/*). */
-function serveDesign(pathname: string, res: http.ServerResponse): boolean {
+/** Serve a frontend file for nice routes (/, /config…) or by raw name (support.js, *.dc.html, vendor/*, assets/*). */
+function serveFrontend(pathname: string, res: http.ServerResponse): boolean {
   const rel = PAGE_FILES[pathname] ?? decodeURIComponent(pathname).replace(/^\/+/, "");
   if (!rel) return false;
-  const file = path.join(DESIGN_DIR, rel);
-  if (!file.startsWith(DESIGN_DIR) || !fs.existsSync(file) || !fs.statSync(file).isFile()) return false;
+  const file = path.join(FRONTEND_DIR, rel);
+  if (!file.startsWith(FRONTEND_DIR) || !fs.existsSync(file) || !fs.statSync(file).isFile()) return false;
   const ct = CONTENT_TYPE[path.extname(file).toLowerCase()] ?? "application/octet-stream";
   res.writeHead(200, { "content-type": ct + "; charset=utf-8" });
   res.end(fs.readFileSync(file));
@@ -68,7 +68,7 @@ export function createHttp(deps: Deps): http.Server {
     const { pathname } = url;
     const method = req.method || "GET";
 
-    if (method === "GET" && serveDesign(pathname, res)) return;
+    if (method === "GET" && serveFrontend(pathname, res)) return;
 
     if (pathname.startsWith("/api/")) {
       if (TOKEN && url.searchParams.get("token") !== TOKEN) return send(res, 401, { error: "bad token" });

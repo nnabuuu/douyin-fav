@@ -3,3 +3,5 @@ workspace/
 .idea/
 .DS_Store
 *.log
+# Claude Design 工作目录(源/mockup);上线前端在 frontend/
+design/

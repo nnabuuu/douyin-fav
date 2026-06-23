@@ -20,7 +20,7 @@ npm run serve                       # http://localhost:8787
 #    /config 里配 Notion token + 收藏夹,schedule.enabled=true
 ```
 
-`npm run serve` 后打开 `http://localhost:8787` 是「即见」本地 Web 界面(提取字幕 `/`、自动同步 `/config`、Token 管理 `/tokens`、安装向导 `/setup`),由服务直接发 `design/`。**React 与字体都已 vendor 到本地(`design/vendor/`),无任何 CDN 依赖,可完全离线自托管。**
+`npm run serve` 后打开 `http://localhost:8787` 是「即见」本地 Web 界面(提取字幕 `/`、自动同步 `/config`、Token 管理 `/tokens`、安装向导 `/setup`),由服务直接发 `frontend/`。**React 与字体都已 vendor 到本地(`frontend/vendor/`),无任何 CDN 依赖,可完全离线自托管。**
 
 ## 架构(clean architecture,平台按 URL 分发)
 
